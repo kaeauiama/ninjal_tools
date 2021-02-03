@@ -1,5 +1,5 @@
-# version 4.0
-# last-modified 2021-01-23
+# version 4.1
+# last-modified 2021-02-03
 # --------------------------------------------------------------
 # 校正作業の終了した Excel からコメント列等を削除し、
 # それを COJADS サイト上で配布する CSV に変換し、ついでに ZIP を作成します
@@ -41,10 +41,11 @@ def make_folder(path):
             exit(0)
     else:
         os.mkdir(path)
-        logger.info("created " + path + "directory")
+        logger.info("created " + path + " directory")
 
 
-def remove_unnecessary_column (path):
+def format_excel (path):
+    # 不要な列を削除する
     df = pandas.read_excel(path, dtype="object", engine='openpyxl')
     expected_header = ["xmin","xmax","県","地点","file番号","地点ID","ID","話者","方言テキスト","標準語テキスト","データ名","収録年月日","収録場所","編集担当者","方言チェック担当者","話者生年","話者年齢","話者性別","話題","収録担当者","談話ジャンル","注1番号","注1語形","注1注釈","注2番号","注2語形","注2注釈","注3番号","注3語形","注3注釈"]
     actual_header = df.columns.values.tolist()
@@ -53,12 +54,39 @@ def remove_unnecessary_column (path):
             df=df.drop(columns=x)
     logger.info("dropped columns from " + path)
 
+    # 収録年月日を「YYYY年 MM月 DD日」というフォーマットの文字列に変換
+    # フォーマットについては考慮の余地あり
+    recdate = format_datetime(df.iloc[1].loc['収録年月日'])
+    df.loc[:,'収録年月日'] = recdate
+
     # 古いファイルは excel_old フォルダに移動
     # 新しいファイルは excel_new フォルダに保存
     shutil.move(path, "excel_old" + os.sep + path)
     logger.info("moved " + path + " to excel_old directory")
     df.to_excel("excel_new" + os.sep + path, index=False)
     logger.info("added " + path + " to excel_new directory")
+    return None
+
+
+def format_datetime(value):
+    date = value
+    # シリアル型は変換
+    if type(value) is int or type(value) is float:
+        dt = exceltime2datetime(value)
+        date = f'{str(dt.year)}年{str(dt.month)}月{str(dt.day)}日'
+    # フォーマット
+    date = date.replace(" ", "").replace("年", "年 ").replace("月", "月 ")
+    return date
+
+
+# シリアル値 (int) → datetime 変換
+# FROM: https://teratail.com/questions/186070
+def exceltime2datetime(et):
+    if et < 60:
+        days = pandas.to_timedelta(et - 1, unit='days')
+    else:
+        days = pandas.to_timedelta(et - 2, unit='days')
+    return pandas.to_datetime('1900/1/1') + days
 
 
 def load_excelfile_to_array (path):
@@ -112,7 +140,7 @@ def excel_to_csv (sjis, utf8):
     for excel_path in excel_collection:
         # excel_abspath = os.path.abspath(excel_path)
         try:
-            remove_unnecessary_column (excel_path)
+            format_excel (excel_path)
         except Exception as e:
             print('columnのトリム処理失敗：', excel_path)
             logger.exception(f'{e}')

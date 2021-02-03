@@ -1,5 +1,5 @@
-# version 1.0
-# last-modified 2021-01-30
+# version 1.1
+# last-modified 2021-02-03
 # ------------------------------------------------------------------------
 # viewer 用の metadata_squeezer からアイデアを流用（コードはほぼ全面書き換え）
 # 同じフォルダにあるエクセルファイルからメタデータを抽出して CSV を吐く
@@ -41,22 +41,47 @@ def get_location(df):
 
 
 # 収録年を返す
-# YYYY年MM月DD日形式であることを前提とする、それ以外エラー
 def get_recyear(df):
 	recdate = df.iloc[2].loc["収録年月日"]
-	# スペース削除して正規化、「年」より前の部分を取得
-	recdate = recdate.replace(" ", "")
-	recyear = recdate.split("年")[0]
+	# 「43532」のようなシリアル型は変換して年を取得
+	if type(recdate) is int or type(recdate) is float:
+		recyear = exceltime2datetime(recdate).year
+	# 「YYYY年MM月DD日」形式は「年」より前の部分を取得
+	elif type(recdate) is str:
+		recdate = recdate.replace(" ", "")
+		recyear = recdate.split("年")[0]
+	else:
+		logger.error(f'収録年が取得できません：recdate == {str(recdate)}: {type(recdate)}')
+		return ""
 	logger.info(f'収録年：{recyear}')
 	return str(recyear)
 
 
+# シリアル値 (int) → datetime 変換
+# FROM: https://teratail.com/questions/186070
+def exceltime2datetime(et):
+    if et < 60:
+        days = pandas.to_timedelta(et - 1, unit='days')
+    else:
+        days = pandas.to_timedelta(et - 2, unit='days')
+    return pandas.to_datetime('1900/1/1') + days
+
+
 # 収録時間を返す
-# 現状ではエクセル上の最大のxmaxを返す
+# 現状ではエクセル上の最大のxmaxを利用してmm:ss文字列で返す
 def get_length(df):
 	xmax_max = df.loc[:,"xmax"].max()
-	logger.info(f'長さ：{xmax_max}')
-	return str(xmax_max)
+	xmax_fmt = ""
+	try:
+		min = int(xmax_max // 60)
+		sec = int(xmax_max % 60)
+		xmax_fmt = '{mm}:{ss:02}'.format(mm=min, ss=sec)
+	except Exception as e:
+		logger.error('型エラー：xmaxの最大値が数値型ではありません。')
+		logger.error(f'xmax_max == {xmax_max}: {type(xmax_max)}')
+		logger.exception(f'{e}')
+	logger.info(f'長さ：{xmax_fmt}')
+	return xmax_fmt
 
 
 # 総話者数、男性数、女性数を返す

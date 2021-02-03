@@ -1,5 +1,5 @@
-# version 4.0
-# last-modified 2021-01-30
+# version 4.1
+# last-modified 2021-02-03
 # ------------------------------------------------------------------------
 # Excel を TextGrid へと変換する
 # TextGrid にない情報として音声の総時間が必要なので音声ファイルも読み込む
@@ -223,16 +223,16 @@ def add_silent_section(split_by_speaker_list, speaker_size, entire_xmax):
 
 def argParse():
 	argparser = argparse.ArgumentParser()
+	argparser.add_argument("-a", "--all", nargs="?", const=True, default=False, help="フォルダ内のExcelを一括変換します")
 	argparser.add_argument("-s", "--serial", nargs="?", const=True, default=False, help="処理終了後、次のファイル選択画面を開きます")
-	argparser.add_argument("-n", "--noaudio", nargs="?", const=True, default=False, help="音声ファイルの長さを参照せずにTextGridを作ります（非推奨）")
-	argparser.add_argument("-a", "--all", nargs="?", const=True, default=False, help="フォルダ内のExcelを一括変換します（自動的に --noaudio オプションがつきます）。")
+	argparser.add_argument("-n", "--noaudio", nargs="?", const=True, default=False, help="音声ファイルの長さを参照せずにExcelだけからTextGridを作ります")
 	return argparser.parse_args()
 
 
 def get_excel_path (pwdpath=None):
 	root = tkinter.Tk()
 	root.withdraw()
-	fTyp = [("エクセルファイル","*.xlsx;*.xls;*.xlsm")]
+	fTyp = [("エクセルファイル","*.xlsx *.xls *.xlsm")]
 
 	# serial の場合は前回処理したファイルのディレクトリで選択画面を開く
 	iDir = pwdpath if pwdpath is not None else os.path.abspath(os.path.dirname(__file__))
@@ -328,7 +328,11 @@ def make_textgrid (item, isNoAudio):
 if __name__ == '__main__':
 	logger.info('起動')
 	args = argParse()
-	print("エクセルファイル、続いて音声ファイル(wav)を選択してください。ファイル名が同一の場合は、音声ファイルは自動的に選択されます。同名のTextGridファイルが作成され、既存のファイルは上書きされますのでご注意ください。--serialオプションをつけると連続で処理できます。")
+	print("使用法")
+	print("エクセルファイル、続いて音声ファイル(wav)を選択してください。ファイル名が同一の場合は、音声ファイルは自動的に選択されます。同名のTextGridファイルが作成され、既存のファイルは上書きされますのでご注意ください。")
+	print("　--all をつけるとフォルダ内のエクセルファイルを一括で処理します。TextGrid の上書き注意！")
+	print("　--serial をつけるとエクセルファイルを連続で処理できます。処理ファイルは毎回手動で選択します。")
+	print("　--noaudio をつけると音声ファイルを使わずにエクセルファイルのみから TextGrid を作成します。他オプションと併用可能です。")
 	logger.info('args: all - {}, serial - {}, noaudio - {}'.format(
 		'true' if args.all else 'false',
 		'true' if args.serial else 'false',
@@ -343,7 +347,7 @@ if __name__ == '__main__':
 		logger.info(f'処理対象：{", ".join(collection)}')
 		for item in collection:
 			# noaudio True
-			make_textgrid(item, True)
+			make_textgrid(item, args.noaudio)
 		print("終了しました。")
 		logger.info('「all」プロセス終了')
 		exit(0)
