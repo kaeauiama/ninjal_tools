@@ -93,9 +93,9 @@ def load_excelfile_to_array (path):
     new_path = "excel_new" + os.sep + path
     sheet = openpyxl.load_workbook(new_path).active
     arr = []
-    for r in range(1, sheet.max_row):
+    for r in range(1, sheet.max_row + 1):
         line = []
-        for c in range(1, sheet.max_column):
+        for c in range(1, sheet.max_column + 1):
             if sheet.cell(r,c).value is None:
                 line.append('')
             elif c == 7:
