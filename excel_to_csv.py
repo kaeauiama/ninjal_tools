@@ -1,5 +1,5 @@
-# version 4.1
-# last-modified 2021-02-03
+# version 4.3
+# last-modified 2021-02-23
 # --------------------------------------------------------------
 # 校正作業の終了した Excel からコメント列等を削除し、
 # それを COJADS サイト上で配布する CSV に変換し、ついでに ZIP を作成します
@@ -52,12 +52,21 @@ def format_excel (path):
     for x in actual_header:
         if x not in expected_header:
             df=df.drop(columns=x)
+
     logger.info("dropped columns from " + path)
 
     # 収録年月日を「YYYY年 MM月 DD日」というフォーマットの文字列に変換
     # フォーマットについては考慮の余地あり
-    recdate = format_datetime(df.iloc[1].loc['収録年月日'])
-    df.loc[:,'収録年月日'] = recdate
+    recdate = format_datetime(df.iloc[0].loc['収録年月日'])
+    cn = df.xmin.count() - 1
+    df.loc[:cn,'収録年月日'] = recdate
+
+    # 列数が足りないファイルは excel_error に移動して以降の処理に進ませない
+    if len(df.columns) != 30:
+        shutil.move(path, "excel_error" + os.sep + path)
+        print('列数が30列に足りません。エラーフォルダに移動：', path)
+        logger.warning("moved " + path + " to excel_error directory")
+        return True
 
     # 古いファイルは excel_old フォルダに移動
     # 新しいファイルは excel_new フォルダに保存
@@ -65,7 +74,7 @@ def format_excel (path):
     logger.info("moved " + path + " to excel_old directory")
     df.to_excel("excel_new" + os.sep + path, index=False)
     logger.info("added " + path + " to excel_new directory")
-    return None
+    return False
 
 
 def format_datetime(value):
@@ -110,7 +119,10 @@ def load_excelfile_to_array (path):
 def save_array_to_csvfile (dataarr, csv_name, isOnlySjis, isOnlyUtf8):
     csv = ''
     for raw in dataarr:
-        csv += ','.join(map(str, raw)) + '\n'
+        ln = ','.join(map(lambda x: re.sub("[\n,]", "", str(x)), raw))
+        if ln == ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,':
+            continue
+        csv += ln + '\n'
 
     # --utf8 指定のときは飛ばす
     if isOnlyUtf8 == False:
@@ -140,7 +152,9 @@ def excel_to_csv (sjis, utf8):
     for excel_path in excel_collection:
         # excel_abspath = os.path.abspath(excel_path)
         try:
-            format_excel (excel_path)
+            err = format_excel (excel_path)
+            if err:
+                continue
         except Exception as e:
             print('columnのトリム処理失敗：', excel_path)
             logger.exception(f'{e}')
@@ -205,6 +219,7 @@ if __name__ == '__main__':
     
     # フォルダを作成
     try: 
+        make_folder("excel_error")
         make_folder("excel_old")
         make_folder("excel_new")
         make_folder("csv_sjis")
