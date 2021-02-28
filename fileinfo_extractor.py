@@ -140,7 +140,7 @@ def extract_metadata (path):
 if __name__ == "__main__":
 	logger.info('==========処理開始==========')
 
-	excel_collection = glob.glob('*.xls*')
+	excel_collection = sorted(glob.glob('*.xls*'))
 	strlog = ", ".join(excel_collection)
 	print(f'処理対象：{strlog}')
 	logger.info(f'処理対象：{strlog}')
