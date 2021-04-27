@@ -1,5 +1,5 @@
-# version 1.0
-# last-modified 2021-02-18
+# version 1.1
+# last-modified 2021-04-27
 # ------------------------------------------------------------------------
 # CSV から .js ファイルを作成します。
 # 	data_csv_map.csv -> data_csv.js & data_map.js
@@ -13,6 +13,7 @@
 # の順序で作業します。
 # ------------------------------------------------------------------------
 
+# -*- coding: utf-8 -*-
 import csv, datetime, json, os
 
 def make_datalist (filepath):
@@ -23,7 +24,7 @@ def make_datalist (filepath):
 		datalist ([dict]): the header row of the csv will be the dict keys
 	"""
 	datalist = []
-	with open (filepath, 'r') as f:
+	with open (filepath, 'r', encoding='utf-8') as f:
 		for row in csv.DictReader(f):
 			datalist.append(row)
 	return datalist
@@ -90,25 +91,21 @@ def make_data_csv_js (filepath):
 	datalist = make_datalist(filepath)
 	namelist = make_categorylist("name", datalist)
 	datalist_all = []
-	datalist_all.append({"prefecture": "0", "title": "", "outline": "<button id='data/cojads_allcsv.zip' onclick='dl(this.id)'>　一括ダウンロード（ZIP, 3.3MB）　</button>"})
+	datalist_all.append({"prefecture": "0", "title": "", "filename": "00", "outline": "<button id='data/cojads_allcsv.zip' onclick='dl(this.id)'>　一括ダウンロード（ZIP）　</button>"})
 	for item_of_namelist in namelist:
 		name = item_of_namelist
 		outlinestr = "<table class='dl'><tbody><tr align='left'><th>ファイル名　　</th><th>収録年</th><th>長さ</th><th>話者数</th><th>公開時期</th><th></th></tr>"
 		for item_datalist in datalist:
 			if item_datalist['name'] == item_of_namelist:
 				prefecture_num = item_datalist['prefecture']
+				filename = item_datalist['filename']
 				outlinestr += r"<tr><td>" + item_datalist['filename'] + r"　</td><td>" + item_datalist['year'] + r"年　</td><td>" + item_datalist['length'] + "　</td><td>" + item_datalist['speakers'] + "人（男" + item_datalist['male'] + "・女" + item_datalist['female'] + "）</td><td>" + item_datalist['release'].replace('公開', '') + r"</td><td><button id='csv/" + item_datalist['filename'] + r".csv' onclick='dl(this.id)'>　ダウンロード　</button></td></tr>"
 		outlinestr += "</tbody></table>"
-		datalist_all.append({"prefecture": prefecture_num, "title": name, "outline": outlinestr})
+		datalist_all.append({"prefecture": prefecture_num, "title": name, "filename": filename, "outline": outlinestr})
 	
 	#県番号順にソートして形を整える
-	datalist_ordered = []
-    #for i in range(0, 47):⇒for i in range(0, 48):に変更した。（黄）
-	for i in range(0, 48):
-		for each in datalist_all:
-			if int(each['prefecture']) == i:
-				datalist_ordered.append(each)
-	datalist_full = { "": { "": datalist_ordered } }		
+	datalist_ordered = sorted(datalist_all, key = lambda x:x['filename'])
+	datalist_full = { "": { "": datalist_ordered } }
 	
 	outputfile(datalist_full, "csv", filepath)
 
@@ -191,18 +188,21 @@ def make_data_events_js (filepath):
 	outputfile(datalist_full, "events", filepath)
 
 if __name__ == '__main__':
-	filepath_csv_map = os.path.dirname(os.path.abspath(__file__)) + "/data_csv_map.csv"
-	#filepath_news    = os.path.dirname(os.path.abspath(__file__)) + "/data_news.csv"
-	filepath_studies = os.path.dirname(os.path.abspath(__file__)) + "/data_studies.csv"
-	filepath_events  = os.path.dirname(os.path.abspath(__file__)) + "/data_events.csv"
+	# 同一フォルダ内の対象ファイルを取得
+	pwd = os.path.dirname(os.path.abspath(__file__))
+	filepath_csv_map  = pwd + "/data_csv_map.csv"
+	#filepath_news    = pwd + "/data_news.csv"
+	filepath_studies  = pwd + "/data_studies.csv"
+	filepath_events   = pwd + "/data_events.csv"
 	
-	# ファイル選択
+	# ファイル自由選択（廃止）
 	#root = tkinter.Tk()
 	#root.withdraw()
 	#fTyp = [("","*")]
 	#iDir = os.path.abspath(os.path.dirname(__file__))
 	#filepath = tkinter.filedialog.askopenfilename(filetypes = fTyp,initialdir = iDir)
 	
+	# 作成するものだけコメントアウトを外すこと
 	#make_data_map_js (filepath_csv_map)
 	make_data_csv_js (filepath_csv_map)
 	#make_data_news_js (filepath_news)
