@@ -1,5 +1,5 @@
-# version 1.1
-# last-modified 2021-02-03
+# version 1.2
+# last-modified 2021-04-27
 # ------------------------------------------------------------------------
 # viewer 用の metadata_squeezer からアイデアを流用（コードはほぼ全面書き換え）
 # 同じフォルダにあるエクセルファイルからメタデータを抽出して CSV を吐く
@@ -27,22 +27,22 @@ logger.propagate = False
 
 # 県番号を返す
 def get_prefecture(df):
-	prefecture = df.iloc[2].loc["file番号"]
+	prefecture = df.iloc[0].loc["file番号"]
 	logger.info(f'県番号：{prefecture}')
 	return str(prefecture)
 
 
 # 収録地点を返す
 def get_location(df):
-	pref = df.iloc[2].loc["県"]
-	loc = df.iloc[2].loc["地点"]
+	pref = df.iloc[0].loc["県"]
+	loc = df.iloc[0].loc["地点"]
 	logger.info(f'地点：{pref+loc}')
 	return pref + loc
 
 
 # 収録年を返す
 def get_recyear(df):
-	recdate = df.iloc[2].loc["収録年月日"]
+	recdate = df.iloc[0].loc["収録年月日"]
 	# 「43532」のようなシリアル型は変換して年を取得
 	if type(recdate) is int or type(recdate) is float:
 		recyear = exceltime2datetime(recdate).year
@@ -73,9 +73,9 @@ def get_length(df):
 	xmax_max = df.loc[:,"xmax"].max()
 	xmax_fmt = ""
 	try:
-		min = int(xmax_max // 60)
-		sec = int(xmax_max % 60)
-		xmax_fmt = '{mm}:{ss:02}'.format(mm=min, ss=sec)
+		full_sec = int(xmax_max)
+		hour, min, sec = full_sec// 3600, full_sec// 60 % 60, full_sec% 60
+		xmax_fmt = '{HH}:{mm:02}:{ss:02}'.format(HH=hour, mm=min, ss=sec)
 	except Exception as e:
 		logger.error('型エラー：xmaxの最大値が数値型ではありません。')
 		logger.error(f'xmax_max == {xmax_max}: {type(xmax_max)}')
