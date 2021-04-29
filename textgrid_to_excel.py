@@ -1,5 +1,5 @@
-# version 3.0
-# last-modified 2020-04-20
+# version 3.1
+# last-modified 2020-04-29
 # ------------------------------------------------------------------------
 # TextGrid から Excel を作る
 # -s (--serial)	処理終了後、次のTextGrid選択画面を開きます
@@ -83,8 +83,8 @@ def make_excelfile(filepath):
 					continue
 
 				line = line + 1
-				sheet.cell(row=line, column=1, value=xmin)
-				sheet.cell(row=line, column=2, value=xmax)
+				sheet.cell(row=line, column=1, value=float(xmin))
+				sheet.cell(row=line, column=2, value=float(xmax))
 				sheet.cell(row=line, column=3, value=tier)
 				sheet.cell(row=line, column=4, value=text)
 			
@@ -103,7 +103,7 @@ def make_excelfile(filepath):
 					continue
 
 				line = line + 1
-				sheet.cell(row=line, column=1, value=numb)
+				sheet.cell(row=line, column=1, value=float(numb))
 				sheet.cell(row=line, column=3, value=tier)
 				sheet.cell(row=line, column=4, value=mark)
 		except Exception as ex:
