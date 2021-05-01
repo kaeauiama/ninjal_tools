@@ -1,5 +1,5 @@
-# version 3.1
-# last-modified 2020-04-29
+# version 3.2
+# last-modified 2020-05-01
 # ------------------------------------------------------------------------
 # TextGrid から Excel を作る
 # -s (--serial)	処理終了後、次のTextGrid選択画面を開きます
@@ -34,7 +34,7 @@ def make_excelfile(filepath):
 		for row in f:
 			row.encode('shift_jis')
 	else:
-		filedata = open(filepath)
+		filedata = open(filepath, encoding='shift_jis')
 		f = filedata.readlines()
 		filedata.close()
 	
