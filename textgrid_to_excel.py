@@ -1,5 +1,5 @@
-# version 3.2
-# last-modified 2020-05-01
+# version 3.3
+# last-modified 2020-05-08
 # ------------------------------------------------------------------------
 # TextGrid から Excel を作る
 # -s (--serial)	処理終了後、次のTextGrid選択画面を開きます
@@ -27,14 +27,14 @@ def check_encoding(file_path):
 def make_excelfile(filepath):
 	#文字コードがutf-8ならShift-JISに変換する；Shift-JISならそのまま
 	charset = check_encoding(filepath)
-	if charset != 'SHIFT_JIS':
+	if charset != 'cp932':
 		filedata = open(filepath, encoding=charset)
 		f = filedata.readlines()
 		filedata.close()
 		for row in f:
-			row.encode('shift_jis')
+			row.encode('cp932')
 	else:
-		filedata = open(filepath, encoding='shift_jis')
+		filedata = open(filepath, encoding='cp932')
 		f = filedata.readlines()
 		filedata.close()
 	
