@@ -1,5 +1,5 @@
-# version 4.4
-# last-modified 2021-05-08
+# version 4.5
+# last-modified 2021-05-09
 # --------------------------------------------------------------
 # 校正作業の終了した Excel からコメント列等を削除し、
 # それを COJADS サイト上で配布する CSV に変換し、ついでに ZIP を作成します
@@ -27,13 +27,13 @@ logger.addHandler(fileout)
 logger.propagate = False
 
 
-def noticeIllegalChar(e):
+def noticeIllegalChar(i, e):
     errorMsg = traceback.format_exception_only(type(e), e)[0]
     try:
         regex = re.compile("(?<=character ')(.*)(?=' in)")
         char = regex.search(errorMsg).group(0)
         # Windows cmd はデフォルトで表示文字コードが cp932 なので、無難に unicode エンコードのままデコードせず表示する
-        return "Shift-JISで表示できない文字'" + char + "'が含まれています（左の文字列で検索して、実際の文字を確認してください）。別の文字に置き換えるか、削除して再度お試しください。"
+        return str(i) + "行目にShift-JISで表示できない文字'" + char + "'が含まれています（左の文字列で検索して、実際の文字を確認してください）。別の文字に置き換えるか、削除して再度お試しください。"
     except Exception as e:
         logger.warn(e)
         return "Shift-JISへの変換に失敗しました。"
@@ -129,32 +129,36 @@ def load_excelfile_to_array (path):
 
 
 def save_array_to_csvfile (dataarr, csv_name, isOnlySjis, isOnlyUtf8):
-    csv = ''
-    for raw in dataarr:
-        ln = ','.join(map(lambda x: re.sub("[\n,]", "", str(x)), raw))
+    csvlines = []
+    for row in dataarr:
+        ln = ','.join(map(lambda x: re.sub("[\n,]", "", str(x)), row))
         if ln == ',,,,,,,,,,,,,,,,,,,,,,,,,,,,,':
             continue
-        csv += ln + '\n'
+        csvlines.append(ln)
 
     # SJIS で保存する。--utf8 指定のときは飛ばす
     # Excel 内部は utf-8 なので、sjis として保存できない文字が存在する
     # SJIS 系文字コードは他に shift_jis, shift_jisx0213, shift_jis_2004 があるが
     # ここでは基本的な cp932 のみとする
     if isOnlyUtf8 == False:
+        i = 1
         csv_name_sjis = 'csv_sjis' + os.sep + csv_name
         try:
             with open(csv_name_sjis + '.csv', mode='w', encoding='cp932') as w:
-                w.write(csv)
+                for ln in csvlines:
+                    w.write(ln+"\n")
+                    i += 1
             logger.info("saved " + csv_name + ".csv to csv_sjis directory")
         except Exception as e:
             # ユーザに変換不可文字を通知する
-            logger.error(noticeIllegalChar(e))
+            logger.error(noticeIllegalChar(i, e))
 
     # UTF8 で保存する。--sjis 指定のときは飛ばす
     if isOnlySjis == False:
         csv_name_utf8 = 'csv_utf8' + os.sep + csv_name
         with open(csv_name_utf8 + '_utf8.csv', mode='w', encoding='utf-8') as w:
-            w.write(csv)
+            for ln in csvlines:
+                w.write(ln+"\n")
         logger.info("saved " + csv_name + "_utf8.csv to csv_utf8 directory")
 
 
