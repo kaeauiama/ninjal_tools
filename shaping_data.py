@@ -1,5 +1,5 @@
-# version 1.1
-# last-modified 2021-04-27
+# version 1.2
+# last-modified 2021-05-11
 # ------------------------------------------------------------------------
 # CSV から .js ファイルを作成します。
 # 	data_csv_map.csv -> data_csv.js & data_map.js
@@ -15,6 +15,19 @@
 
 # -*- coding: utf-8 -*-
 import csv, datetime, json, os
+from chardet.universaldetector import UniversalDetector
+
+
+def check_encoding(filepath):
+	detector = UniversalDetector()
+	with open(filepath, mode='rb') as f:
+		for binary in f:
+			detector.feed(binary)
+			if detector.done:
+				break
+	detector.close()
+	return detector.result['encoding']
+
 
 def make_datalist (filepath):
 	""" read csv from the path and return it in the dict form
@@ -24,7 +37,8 @@ def make_datalist (filepath):
 		datalist ([dict]): the header row of the csv will be the dict keys
 	"""
 	datalist = []
-	with open (filepath, 'r', encoding='utf-8') as f:
+	enc = check_encoding(filepath)
+	with open (filepath, 'r', encoding=enc) as f:
 		for row in csv.DictReader(f):
 			datalist.append(row)
 	return datalist
