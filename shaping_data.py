@@ -91,7 +91,7 @@ def make_data_map_js (filepath):
 		linkstr = "<table><tbody>"
 		for item_datalist in datalist:
 			if item_datalist['name'] == item_namelist:
-				coordinates = '[' + item_datalist['coordinate_x'] + ', ' + item_datalist['coordinate_y'] + ']'
+				coordinates = [item_datalist['coordinate_x'], item_datalist['coordinate_y']]
 				linkstr += r"<tr><td><a href='#' id='csv/" + item_datalist['filename'] + r".csv' onclick='dl(this.id)'>" + item_datalist['filename'] + r"</a></td><td>" + item_datalist['year'] + r"</td><td>" + item_datalist['length'] + "</td></tr>"
 		linkstr += "</tbody></table>"
 		data_geometry = {"type":"Point", "name": name, "coordinates": coordinates, "link": linkstr}
