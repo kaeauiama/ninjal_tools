@@ -16,9 +16,9 @@
   
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     
-    // ２列をコピーしてから「整列オプション」をかけていく
+    // 時間列を削ってテキスト列を取得
     let arrAlignData = sheet.getDataRange().getValues();
-  
+    arrAlignData.map(x=>x.splice(0,2));
   
     // 全角に置換しつつ標準語テキストを配列に入れる
     data = [];

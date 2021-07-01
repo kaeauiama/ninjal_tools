@@ -5,9 +5,12 @@
  function checkText() {
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     
-    // ２列を取得
+    // 時間列を削ってテキスト列を取得
     let arrAlignData = sheet.getDataRange().getValues();
     let arrOriginal = sheet.getDataRange().getValues();
+    arrAlignData.map(x=>x.splice(0,2));
+    arrOriginal.map(x=>x.splice(0,2));
+    
     const len = arrAlignData.length;
     
     // 半角=>全角置換
@@ -279,6 +282,6 @@
     }
     
     // すべて終わったらスプレッドシートに書き込む
-    sheet.getRange(1,3,arrAlignData.length, arrAlignData[0].length).setValues(arrAlignData);
+    sheet.getRange(1,5,arrAlignData.length, arrAlignData[0].length).setValues(arrAlignData);
     return null;
   }

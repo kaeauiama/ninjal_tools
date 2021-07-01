@@ -12,8 +12,9 @@
   function getRTagArr() {
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     
-    // ２列をコピーしてから「整列オプション」をかけていく
+    // 時間列を削ってテキスト列を取得
     let arrAlignData = sheet.getDataRange().getValues();
+    arrAlignData.map(x=>x.splice(0,2));
   
     // 半角=>全角置換
     // 人名X1みたいなのは過剰修正になるので要注意
@@ -54,6 +55,7 @@
     console.log(RTagArr);
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     let arrAlignData = sheet.getDataRange().getValues();
+    arrAlignData.map(x=>x.splice(0,2));
     for(let i in arrAlignData){
       arrAlignData[i][0] = arrAlignData[i][0].toFullWidth();
       arrAlignData[i][1] = arrAlignData[i][1].toFullWidth();
@@ -82,7 +84,7 @@
     }
   
     // すべて終わったらスプレッドシートに書き込む 
-    sheet.getRange(1,3,arrAlignData.length, 3).setValues(arrAlignData);
-    sheet.getRange(1, 6, RTagArr.length, 2).setValues(RTagArr);
+    sheet.getRange(1,5,arrAlignData.length, 3).setValues(arrAlignData);
+    sheet.getRange(1, 8, RTagArr.length, 2).setValues(RTagArr);
     return null;
   }

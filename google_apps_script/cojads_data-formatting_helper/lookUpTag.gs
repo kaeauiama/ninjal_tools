@@ -11,8 +11,9 @@
   function getTagList() {
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     
-    // ２列をコピーしてから「整列オプション」をかけていく
+    // 時間列を削ってテキスト列を取得
     let arrAlignData = sheet.getDataRange().getValues();
+    arrAlignData.map(x=>x.splice(0,2));
   
     // 半角=>全角置換
     // 人名X1みたいなのは過剰修正になるので要注意
