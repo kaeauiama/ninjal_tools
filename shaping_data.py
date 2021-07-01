@@ -72,9 +72,9 @@ def outputfile (dict, keyword, filepath):
 	complete_data = "{const data_" + keyword + " = " + dumped_str + ";document.currentScript." + keyword + "dataObj=data_" + keyword + ";}"
 	
 	# エスケープされる文字を適当に置換する
-	complete_data = complete_data.replace('\\"', '"')
-	complete_data = complete_data.replace('"[', '[')
-	complete_data = complete_data.replace(']"', ']')
+	#complete_data = complete_data.replace('\\"', '\"')
+	#complete_data = complete_data.replace('"[', '[')
+	#complete_data = complete_data.replace(']"', ']')
 	
 	# 出力
 	dt_now = datetime.datetime.now()
