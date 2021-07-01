@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+    <div id="tablePlace">少々お待ちください。</div>
+    <button onclick="submitData()">決定</button>
+    <button onclick="google.script.host.close()">閉じる</button>
+    <div id="messagePlace"></div>
+    <script>
+      window.onload = google.script.run.withSuccessHandler(renderTable).getRTagArr();
+      function renderTable(arr){
+        var table = document.createElement("table");
+        var thead = document.createElement("thead");
+        var tr_h = document.createElement("tr");
+        var th_1 = document.createElement("th");
+        th_1.textContent = "文字列";
+        var th_2 = document.createElement("th");
+        th_2.textContent = "記号";
+        tr_h.appendChild(th_1);
+        tr_h.appendChild(th_2);
+        thead.appendChild(tr_h);
+        table.appendChild(thead);
+
+        var tbody = document.createElement("tbody");
+        tbody.setAttribute("id","valueTable");
+        for (var i=1,i_len=arr.length; i<i_len; i++){
+          var tr_b = document.createElement("tr");
+          var td_1 = document.createElement("td");
+          td_1.textContent = arr[i][0];
+          var td_2 = document.createElement("td");
+          var input = document.createElement("input")
+          input.setAttribute("type", "text");
+          input.setAttribute("value", arr[i][1]);
+          td_2.appendChild(input);
+          tr_b.appendChild(td_1);
+          tr_b.appendChild(td_2);
+          tbody.appendChild(tr_b);
+        }
+        table.appendChild(tbody);
+        tablePlace.textContent ="";
+        tablePlace.appendChild(table);
+      }
+      function submitData() {
+        // valueTable 以下から改めて値をとってくる
+        var arr = [["対応表",""]];
+        var temp = [];
+        var trs = valueTable.querySelectorAll("tr");
+        for (var i=0,i_len=trs.length; i<i_len; i++){
+          var firstItem = trs[i].childNodes[0].textContent;
+          var secondItem = trs[i].childNodes[1].childNodes[0].value;
+          temp = [firstItem, secondItem];
+          arr.push(temp);
+        }
+        // GAS 側の関数を実行
+        google.script.run.withSuccessHandler(function(){
+          messagePlace.textContent = "終了しました。";
+        }).replaceRTag(arr);
+      }
+    </script>
+  </body>
+</html>

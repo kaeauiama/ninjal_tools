@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+  </head>
+  <body>
+    <div id="tablePlace">少々お待ちください。</div>
+    <script>
+      window.onload = google.script.run.withSuccessHandler((lists) => {
+        tablePlace.textContent = "";
+        for(const item of lists){
+          console.log(item);
+          console.log(item["id"]);
+          console.log(item["text"]);
+          tablePlace.innerHTML += "<strong>ID " + item["id"].map(x=>x+1).join(", ") + "</strong><br>" + item["text"] + "<br><br>";
+        }
+      }).autoCompleteDetectorMain();
+    </script>
+  </body>
+</html>
