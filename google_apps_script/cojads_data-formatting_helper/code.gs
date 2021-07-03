@@ -19,18 +19,14 @@
   }
   
   /**
-   * 半角英数字を全角英数字に変換する
+   * 半角英数記号を全角に変換する
    * @name String#toFullWidth
    * @function
    * @param  {string} 任意の文字列
    * @return {string} 半角英数字部分が全角になった文字列
    */
   String.prototype.toFullWidth = function () {
-    let str = this.replace(/[\!-\/\:-\`\[\]\{-\}]/g,
-      function( tmpStr ) {
-        return String.fromCharCode( tmpStr.charCodeAt(0) + 0xFEE0 );
-      }
-    );
+    let str = this.replace(/[\!-\~]/g, char => String.fromCharCode( char.charCodeAt(0) + 0xFEE0 ));
     return str.replace(/\s|&nbsp;/g, "　");
   }
   
