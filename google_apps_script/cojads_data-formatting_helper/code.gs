@@ -31,7 +31,7 @@
         return String.fromCharCode( tmpStr.charCodeAt(0) + 0xFEE0 );
       }
     );
-    return str.replace(/ /g, "　");
+    return str.replace(/\s|&nbsp;/g, "　");
   }
   
   // 転置行列をつくるワンライナー
