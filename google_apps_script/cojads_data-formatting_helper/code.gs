@@ -26,15 +26,12 @@
    * @return {string} 半角英数字部分が全角になった文字列
    */
   String.prototype.toFullWidth = function () {
-    let str = this.replace(/[\!-\/\:-WY-\`\[\]\{-\}]/g,
+    let str = this.replace(/[\!-\/\:-\`\[\]\{-\}]/g,
       function( tmpStr ) {
         return String.fromCharCode( tmpStr.charCodeAt(0) + 0xFEE0 );
       }
     );
-    return str.replace(/ /g, "　")
-    .replace(/1(ＳＧ|ＰＬ)/g,"１$1")
-    .replace(/2(ＳＰ|ＰＬ)/g,"２$1")
-    .replace(/ＡＵX/g, "ＡＵＸ");
+    return str.replace(/ /g, "　");
   }
   
   // 転置行列をつくるワンライナー
