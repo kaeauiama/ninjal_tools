@@ -13,23 +13,24 @@
     
     const len = arrAlignData.length;
     
-    // 半角=>全角置換
-    // 人名X1みたいなのは過剰修正になるので要注意
-    for(let i=0;i<len;i++){
-      arrAlignData[i][0] = arrAlignData[i][0].toFullWidth();
-      arrAlignData[i][1] = arrAlignData[i][1].toFullWidth();
+    // 自動置換
+    // 半角英数→全角に、端スペース削除、ダブルスペース→シングル、タブ・改行の削除
+    const replaceIllegalPattern = (str) => {
+      return str
+        .toFullWidth()
+        .replace(/^　*([^　].*[^　])　*$/g, "$1")
+        .replace(/　　/g, "　")
+        .replace(/[\t\n]/g, "");
     }
-    
-    // 端っこのスペース削除、ダブルスペースをシングルスペースに、タブを削除
     for(let i=0;i<len;i++){
-      arrAlignData[i][0] = arrAlignData[i][0].replace(/^　*([^　].*[^　])　*$/g, "$1").replace(/　　/g, "　").replace(/\t/g, "");
-      arrAlignData[i][1] = arrAlignData[i][1].replace(/^　*([^　].*[^　])　*$/g, "$1").replace(/　　/g, "　").replace(/\t/g, "");
+      arrAlignData[i][0] = replaceIllegalPattern(arrAlignData[i][0]);
+      arrAlignData[i][1] = replaceIllegalPattern(arrAlignData[i][1]);
     }
   
     // 整列オプションのかかり具合を差分チェックで確認
     for(let i=0;i<len;i++){
       let message = "";
-      if(i==0){message+="半角全角・空白調整"; arrAlignData[i].push(message); continue}
+      if(i==0){message+="自動修正"; arrAlignData[i].push(message); continue}
       if(arrAlignData[i][0]=="" || arrAlignData[i][1]==""){message+="空セル"}
       if(arrAlignData[i][0]!=arrOriginal[i][0] || arrAlignData[i][1]!=arrOriginal[i][1]){message+="有"}
       arrAlignData[i].push(message);
@@ -45,7 +46,6 @@
       if(arrAlignData[i][1].split('｛').length!=arrAlignData[i][1].split('｝').length){message+="閉じミス "}
       if(arrAlignData[i][1].split('（').length!=arrAlignData[i][1].split('）').length){message+="閉じミス "}
       if(arrAlignData[i][1].split('＜').length!=arrAlignData[i][1].split('＞').length){message+="閉じミス "}
-      if(/\n/.test(arrAlignData[i][0] + arrAlignData[i][1])){message+="改行有 "}
       if(/（[^：]+?）/.test(arrAlignData[i][1])){message+="：無括弧 "}
       if(/（[^（]+?　[^（]+?）/.test(arrAlignData[i][1])){message+="␣有カッコ "}
       if(/＜[^＝]+?＞/.test(arrAlignData[i][1])){message+="＝無山括弧 "}
