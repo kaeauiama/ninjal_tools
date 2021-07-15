@@ -45,7 +45,7 @@
     let speakerList = [];
     originalData[0].push("各話者の被り");
     for(let i=1;i<len;i++){
-      speakerList.push(originalData[i][2].toHalfWidth());
+      speakerList.push(originalData[i][2].toFullWidth());
       originalData[i].push(""); // 空白をpushしてあらかじめ[i][7]をつくっておく
     }
     // 重複削除して話者リストをつくる
@@ -55,7 +55,7 @@
       let speaker  = speakerList[i];
       let xmaxLast = 0;
       for(let j=1;j<len;j++){
-        if(originalData[j][2].toHalfWidth()==speaker){
+        if(originalData[j][2].toFullWidth()==speaker){
           if (j==1) {
             xmaxLast = originalData[j][1];
             continue;

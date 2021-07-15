@@ -247,11 +247,17 @@
         if (standardTxt[i] != standardTxt[i].toFullWidth()) {
           correctionList.push(`${(i + 2).toString()}行：標準語に半角文字有`);
         }
-        if (dialectTxt[i].split("。").length != standardTxt[i].split("。").length) {
-          correctionList.push(`${(i + 2).toString()}行：句点の個数が異なる`);
+        if (dialectTxt[i].split("。").length > standardTxt[i].split("。").length) {
+          correctionList.push(`${(i + 2).toString()}行：方言に句点が多い`);
         }
-        if (dialectTxt[i].split("　").length != standardTxt[i].split("　").length) {
-          correctionList.push(`${(i + 2).toString()}行：空白個数が異なる`);
+        if (dialectTxt[i].split("。").length < standardTxt[i].split("。").length) {
+          correctionList.push(`${(i + 2).toString()}行：標準語に句点が多い`);
+        }
+        if (dialectTxt[i].split("　").length > standardTxt[i].split("　").length) {
+          correctionList.push(`${(i + 2).toString()}行：方言に空白が多い`);
+        }
+        if (dialectTxt[i].split("　").length < standardTxt[i].split("　").length) {
+          correctionList.push(`${(i + 2).toString()}行：標準語に空白が多い`);
         }
         if (dialectTxt[i].split("｛").length != standardTxt[i].split("｛").length) {
           correctionList.push(`${(i + 2).toString()}行：方言と標準語で波括弧の個数に齟齬がある`);
@@ -290,7 +296,7 @@
   
       // 話者とメタ情報の整合性チェック
       // 話者リストの作成
-      let speakerArray = data_t[7].map((x) => x.toHalfWidth());
+      let speakerArray = data_t[7].map((x) => x.toFullWidth());
       speakerArray.shift();
       const speakerSet = new Set(speakerArray);
       const speakerList = Array.from(speakerSet);
@@ -298,7 +304,7 @@
       let speakerListAndMeta = {};
       loop: for (let item of speakerList) {
         for (let i = 0; i < len; i++) {
-          if (data[i][7].toHalfWidth() === item) {
+          if (data[i][7].toFullWidth() === item) {
             speakerListAndMeta[item] = [data[i][15], data[i][16], data[i][17]];
             continue loop;
           }
@@ -306,7 +312,7 @@
       }
       // チェックしていく
       for (let i = 1; i < len; i++) {
-        if (speakerListAndMeta[data[i][7].toHalfWidth()].join() != [data[i][15], data[i][16], data[i][17]].join()) {
+        if (speakerListAndMeta[data[i][7].toFullWidth()].join() != [data[i][15], data[i][16], data[i][17]].join()) {
           correctionList.push(`${(i + 1).toString()}行：話者とメタ情報が不一致`);
         }
       }

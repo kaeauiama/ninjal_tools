@@ -41,7 +41,8 @@
       let message = "";
       if(i==0){message+="記号系"; arrAlignData[i].push(message); continue}  
       if(arrAlignData[i][0].split('。').length!=arrAlignData[i][1].split('。').length){message+="句点個数 "}
-      if(arrAlignData[i][0].split('　').length!=arrAlignData[i][1].split('　').length){message+="空白個数 "}
+      if(arrAlignData[i][0].split('　').length<arrAlignData[i][1].split('　').length){message+="標準語空白多 "}
+      if(arrAlignData[i][0].split('　').length>arrAlignData[i][1].split('　').length){message+="方言空白多 "}
       if(arrAlignData[i][0].split('｛').length!=arrAlignData[i][1].split('｛').length){message+="｛｝個数 "}
       if(arrAlignData[i][1].split('｛').length!=arrAlignData[i][1].split('｝').length){message+="閉じミス "}
       if(arrAlignData[i][1].split('（').length!=arrAlignData[i][1].split('）').length){message+="閉じミス "}

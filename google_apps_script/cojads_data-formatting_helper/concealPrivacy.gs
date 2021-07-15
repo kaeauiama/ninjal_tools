@@ -17,7 +17,6 @@
     arrAlignData.map(x=>x.splice(0,2));
   
     // 半角=>全角置換
-    // 人名X1みたいなのは過剰修正になるので要注意
     for(let i in arrAlignData){
       arrAlignData[i][0] = arrAlignData[i][0].toFullWidth();
       arrAlignData[i][1] = arrAlignData[i][1].toFullWidth();
@@ -44,7 +43,7 @@
     let RTagArr = [["対応表",""]];
     let temp = [];
     for(let i=1; i <= RTagList.length; i++){
-      temp = [RTagList[i-1], "X" + i];
+      temp = [RTagList[i-1], "Ｘ" + i.toString().toFullWidth()];
       RTagArr.push(temp);
     }
     Logger.log(RTagArr);
