@@ -6,7 +6,12 @@
   <body>
     <div id="tablePlace">少々お待ちください。</div>
     <script>
-      window.onload = google.script.run.withSuccessHandler((lists) => {
+      window.onload = google.script.run.withSuccessHandler(renderTable).autoCompleteDetectorMain();
+      function renderTable (lists) {
+        if (lists === false) {
+          tablePlace.textContent = "特に見つかりませんでした。";
+          return null;
+        }
         tablePlace.textContent = "";
         for(const item of lists){
           console.log(item);
@@ -14,7 +19,7 @@
           console.log(item["text"]);
           tablePlace.innerHTML += "<strong>ID " + item["id"].map(x=>x+1).join(", ") + "</strong><br>" + item["text"] + "<br><br>";
         }
-      }).autoCompleteDetectorMain();
+      }
     </script>
   </body>
 </html>

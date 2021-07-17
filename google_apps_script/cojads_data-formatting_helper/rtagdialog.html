@@ -5,12 +5,17 @@
   </head>
   <body>
     <div id="tablePlace">少々お待ちください。</div>
-    <button onclick="submitData()">決定</button>
-    <button onclick="google.script.host.close()">閉じる</button>
+    <button id="submitButton" onclick="submitData()">決定</button>
+    <button id="closeButton" onclick="google.script.host.close()">閉じる</button>
     <div id="messagePlace"></div>
     <script>
       window.onload = google.script.run.withSuccessHandler(renderTable).getRTagArr();
       function renderTable(arr){
+        if (arr === false) {
+          tablePlace.textContent ="Ｒタグはありませんでした。";
+          submitButton.remove();
+          return null;
+        }
         var table = document.createElement("table");
         var thead = document.createElement("thead");
         var tr_h = document.createElement("tr");

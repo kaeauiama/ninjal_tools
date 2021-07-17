@@ -40,6 +40,35 @@
   const isNum = (a) => {
     return isNaN(Number(a.toString())) ? false : true;
   }
+
+  /**
+   * スプレッドシートのデータを取得する
+   * xmin, xmax, 話者, 方言テキスト, 標準語テキストの５列を想定している
+   * let {xmin_t, xmax_t, speaker_t, dialect_t, standard_t, len, len_t} = getData(); として使用できる
+   */
+  const getData = (sheet) => {
+    const originalData = sheet.getDataRange().getValues();
+    const len = originalData.length;
+    const len_t = originalData[0].length;
+
+    // 検査対象のデータ
+    let original_t = transpose(originalData);
+    let xmin_t = original_t[0];
+    let xmax_t = original_t[1];
+    let speaker_t = original_t[2];
+    let dialect_t = original_t[3];
+    let standard_t = original_t[4];
+
+    return {
+      xmin_t: xmin_t,
+      xmax_t: xmax_t,
+      speaker_t: speaker_t,
+      dialect_t: dialect_t,
+      standard_t: standard_t,
+      len: len,
+      len_t: len_t
+    }
+  }
   
   /**
    * スプレッドシートにカスタムメニューを追加して UI からスクリプトを実行できるようにする
