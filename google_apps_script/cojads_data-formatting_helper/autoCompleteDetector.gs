@@ -16,10 +16,12 @@
   
     // データを取得
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    let {standard_t, len} = getData(sheet);
+    const data = getData(sheet);
+    if (data == null) return null; 
+    let {standard_t, len} = data;
   
     // 全角に置換しつつ標準語テキストを配列に入れる
-    data = standard_t.map(x=>x.toFullWidth());
+    let text = standard_t.map(x=>x.toFullWidth());
   
     /**
      * 完全一致する２行を探す
@@ -33,17 +35,17 @@
       if (referred.indexOf(i)!=-1) continue;
       let result_each = [];
       for(let j=i+1; j<len; j++) {
-        if (setting.includeSimilar === false && data[i]===data[j]) {
+        if (setting.includeSimilar === false && text[i]===text[j]) {
           result_each.push(i, j);
           referred.push(i, j);
-        }else if (setting.includeSimilar === true && vagueSearch(data[i],data[j]) === true) {
+        }else if (setting.includeSimilar === true && vagueSearch(text[i],text[j]) === true) {
           result_each.push(i, j);
           referred.push(i, j);
         }
       }
       if (result_each.length>0) {
-        if (setting.avoidShort == true && data[i].length < 7) continue;
-        result_all.push({id: Array.from(new Set(result_each)), text: data[i]});
+        if (setting.avoidShort == true && text[i].length < 7) continue;
+        result_all.push({id: Array.from(new Set(result_each)), text: text[i]});
       }
     }
     if (result_all.length === []) {

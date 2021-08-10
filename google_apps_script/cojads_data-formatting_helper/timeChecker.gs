@@ -4,7 +4,14 @@
  */
  function timeChecker() {
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    let {xmin_t, xmax_t, speaker_t, dialect_t, len, len_t} = getData(sheet);
+    const data = getData(sheet);
+    if (data == null) return null; 
+    let {xmin_t, xmax_t, speaker_t, dialect_t, len, len_t} = data;
+
+    if (speaker_t == null) {
+      Browser.msgBox("データの判別に失敗しました。", Browser.Buttons.OK);
+      return null;
+    }
   
     // 指摘事項をためる仕組み
     let checklists_t = [];

@@ -11,7 +11,9 @@
   function getTagList() {
     // スプレッドシートからデータを取得
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    let {standard_t} = getData(sheet);
+    const data = getData(sheet);
+    if (data == null) return null; 
+    let {standard_t} = data;
   
     // 半角=>全角置換
     standard_t = standard_t.map(x=>x.toFullWidth());

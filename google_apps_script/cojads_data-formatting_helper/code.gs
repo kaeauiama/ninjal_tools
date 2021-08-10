@@ -41,6 +41,12 @@
     return isNaN(Number(a.toString())) ? false : true;
   }
 
+  const FORMAT = {
+    FOUR: 4,
+    FIVE: 5,
+    TIME: 9
+  };
+
   /**
    * スプレッドシートのデータを取得する
    * xmin, xmax, 話者, 方言テキスト, 標準語テキストの５列を想定している
@@ -50,24 +56,69 @@
     const originalData = sheet.getDataRange().getValues();
     const len = originalData.length;
     const len_t = originalData[0].length;
+    let original_t = transpose(originalData);
+
+    // スプレッドシートのデータフォーマットを判定する
+    const format = detectFormat(originalData[0]);
+    if (format == null) {
+      Browser.msgBox("フォーマットが判別できませんでした", Browser.Buttons.OK);
+      return null;
+    }
 
     // 検査対象のデータ
-    let original_t = transpose(originalData);
-    let xmin_t = original_t[0];
-    let xmax_t = original_t[1];
-    let speaker_t = original_t[2];
-    let dialect_t = original_t[3];
-    let standard_t = original_t[4];
-
-    return {
-      xmin_t: xmin_t,
-      xmax_t: xmax_t,
-      speaker_t: speaker_t,
-      dialect_t: dialect_t,
-      standard_t: standard_t,
-      len: len,
-      len_t: len_t
+    if (format == FORMAT.FOUR) {
+      return {
+        format: FORMAT.FOUR,
+        xmin_t: original_t[0],
+        xmax_t: original_t[1],
+        dialect_t: original_t[2],
+        standard_t: original_t[3],
+        len: len,
+        len_t: len_t
+      }
     }
+    if (format == FORMAT.FIVE) {
+      return {
+        format: FORMAT.FIVE,
+        xmin_t: original_t[0],
+        xmax_t: original_t[1],
+        speaker_t: original_t[2],
+        dialect_t: original_t[3],
+        standard_t: original_t[4],
+        len: len,
+        len_t: len_t
+      }
+    }
+    if (format == FORMAT.TIME) {
+      return {
+        format: FORMAT.FIVE,
+        xmin_t: original_t[0],
+        xmax_t: original_t[1],
+        speaker_t: original_t[2],
+        dialect_t: original_t[3],
+        len: len,
+        len_t: len_t
+      }
+    }
+
+  }
+
+  /**
+   * 貼り付けられたデータの構成を分析して
+   * 旧プログラムとの互換性を担保する
+   */
+  const detectFormat = (header) => {
+    const header4 = ["xmin","xmax","方言テキスト","標準語テキスト"];
+    const header5 = ["xmin","xmax","話者","方言テキスト","標準語テキスト"];
+    const header9 = ["xmin","xmax","話者","方言テキスト"];
+    if (header == null || header.length <= 3) return null;
+    if (header.length >= 5 && header.slice(0,4) == header5) return FORMAT.FIVE;
+    if (header.slice(0,3) == header4) return FORMAT.FOUR;
+    if (header.slice(0,3) == header9) return FORMAT.TIME;
+    if (header.length == 4 && header[3].length <= 1) return FORMAT.FOUR;
+    if (header.length == 4) return FORMAT.FOUR;
+    if (header.length >= 5) return FORMAT.FIVE;
+    return null;
   }
   
   /**
