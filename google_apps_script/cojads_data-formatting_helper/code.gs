@@ -41,10 +41,23 @@
     return isNaN(Number(a.toString())) ? false : true;
   }
 
+  const array_equal = (a, b) => {
+    if (!Array.isArray(a))    return false;
+    if (!Array.isArray(b))    return false;
+    if (a.length != b.length) return false;
+    for (var i = 0, n = a.length; i < n; ++i) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  }
+
   const FORMAT = {
-    FOUR: 4,
-    FIVE: 5,
-    TIME: 9
+    XMIN_XMAX_SPE_DIA_STA: 1,
+    XMIN_XMAX_SPE_DIA: 2,
+    XMIN_XMAX_DIA_STA: 3,
+    SPE_DIA_STA: 4,
+    DIA_STA: 5,
+    ERROR: 9
   };
 
   /**
@@ -60,47 +73,40 @@
 
     // スプレッドシートのデータフォーマットを判定する
     const format = detectFormat(originalData[0]);
-    if (format == null) {
+    if (format == FORMAT.ERROR) {
       Browser.msgBox("フォーマットが判別できませんでした", Browser.Buttons.OK);
       return null;
     }
-
-    // 検査対象のデータ
-    if (format == FORMAT.FOUR) {
-      return {
-        format: FORMAT.FOUR,
-        xmin_t: original_t[0],
-        xmax_t: original_t[1],
-        dialect_t: original_t[2],
-        standard_t: original_t[3],
-        len: len,
-        len_t: len_t
-      }
+    let data = {format: format, len: len, len_t: len_t};
+    if (format == FORMAT.XMIN_XMAX_SPE_DIA_STA) {
+        data["xmin_t"] = original_t[0];
+        data["xmax_t"] = original_t[1];
+        data["speaker_t"] = original_t[2];
+        data["dialect_t"] = original_t[3];
+        data["standard_t"] = original_t[4];
     }
-    if (format == FORMAT.FIVE) {
-      return {
-        format: FORMAT.FIVE,
-        xmin_t: original_t[0],
-        xmax_t: original_t[1],
-        speaker_t: original_t[2],
-        dialect_t: original_t[3],
-        standard_t: original_t[4],
-        len: len,
-        len_t: len_t
-      }
+    if (format == FORMAT.XMIN_XMAX_SPE_DIA) {
+        data["xmin_t"] = original_t[0];
+        data["xmax_t"] = original_t[1];
+        data["speaker_t"] = original_t[2];
+        data["dialect_t"] = original_t[3];
     }
-    if (format == FORMAT.TIME) {
-      return {
-        format: FORMAT.FIVE,
-        xmin_t: original_t[0],
-        xmax_t: original_t[1],
-        speaker_t: original_t[2],
-        dialect_t: original_t[3],
-        len: len,
-        len_t: len_t
-      }
+    if (format == FORMAT.XMIN_XMAX_DIA_STA) {
+        data["xmin_t"] = original_t[0];
+        data["xmax_t"] = original_t[1];
+        data["dialect_t"] = original_t[2];
+        data["standard_t"] = original_t[3];
     }
-
+    if (format == FORMAT.SPE_DIA_STA) {
+        data["speaker_t"] = original_t[0];
+        data["dialect_t"] = original_t[1];
+        data["standard_t"] = original_t[2];
+    }
+    if (format == FORMAT.DIA_STA) {
+        data["dialect_t"] = original_t[0];
+        data["standard_t"] = original_t[1];
+    }
+    return data;
   }
 
   /**
@@ -108,17 +114,22 @@
    * 旧プログラムとの互換性を担保する
    */
   const detectFormat = (header) => {
-    const header4 = ["xmin","xmax","方言テキスト","標準語テキスト"];
-    const header5 = ["xmin","xmax","話者","方言テキスト","標準語テキスト"];
-    const header9 = ["xmin","xmax","話者","方言テキスト"];
-    if (header == null || header.length <= 3) return null;
-    if (header.length >= 5 && header.slice(0,4) == header5) return FORMAT.FIVE;
-    if (header.slice(0,3) == header4) return FORMAT.FOUR;
-    if (header.slice(0,3) == header9) return FORMAT.TIME;
-    if (header.length == 4 && header[3].length <= 1) return FORMAT.FOUR;
-    if (header.length == 4) return FORMAT.FOUR;
-    if (header.length >= 5) return FORMAT.FIVE;
-    return null;
+    const header1 = ["xmin","xmax","話者","方言テキスト","標準語テキスト"];
+    const header2 = ["xmin","xmax","話者","方言テキスト"];
+    const header3 = ["xmin","xmax","方言テキスト","標準語テキスト"];
+    const header4 = ["話者","方言テキスト","標準語テキスト"];
+    const header5 = ["方言テキスト","標準語テキスト"];
+    if (header == null || header.length <= 1) return FORMAT.ERROR;
+    if (header.length >= 5 && array_equal(header.slice(0,5), header1)) return FORMAT.XMIN_XMAX_SPE_DIA_STA;
+    if (header.length == 5) return FORMAT.XMIN_XMAX_SPE_DIA_STA;
+    if (header.length >= 4 && array_equal(header.slice(0,4), header2)) return FORMAT.XMIN_XMAX_SPE_DIA;
+    if (header.length >= 4 && array_equal(header.slice(0,4), header3)) return FORMAT.XMIN_XMAX_DIA_STA;
+    if (header.length == 4) return FORMAT.XMIN_XMAX_DIA_STA;
+    if (header.length >= 3 && array_equal(header.slice(0,3), header4)) return FORMAT.SPE_DIA_STA;
+    if (header.length == 3) return FORMAT.SPE_DIA_STA;
+    if (header.length >= 2 && array_equal(header.slice(0,2), header5)) return FORMAT.DIA_STA;
+    if (header.length == 2) return FORMAT.DIA_STA;
+    return FORMAT.ERROR;
   }
   
   /**

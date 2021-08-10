@@ -14,6 +14,11 @@
     const data = getData(sheet);
     if (data == null) return null; 
     let {standard_t} = data;
+
+    if (!standard_t) {
+      Browser.msgBox("データの取得に失敗しました。標準語テキストが必要です。", Browser.Buttons.OK);
+      return null;
+    }
   
     // 半角=>全角置換
     standard_t = standard_t.map(x=>x.toFullWidth());

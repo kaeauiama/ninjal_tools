@@ -15,6 +15,11 @@
     const data = getData(sheet);
     if (data == null) return null; 
     let {standard_t} = data;
+
+    if (!standard_t) {
+      Browser.msgBox("データの取得に失敗しました。方言テキストおよび標準語テキストが必要です。", Browser.Buttons.OK);
+      return null;
+    }
   
     // 半角=>全角置換
     standard_t = standard_t.map(x=>x.toFullWidth());
@@ -52,6 +57,12 @@
     const data = getData(sheet);
     if (data == null) return null; 
     let {dialect_t, standard_t, len, len_t} = data;
+
+    if (!dialect_t || !standard_t) {
+      Browser.msgBox("データの取得に失敗しました。方言テキストおよび標準語テキストが必要です。", Browser.Buttons.OK);
+      return null;
+    }
+
     dialect_t = dialect_t.map(x=>x.toFullWidth());
     standard_t = standard_t.map(x=>x.toFullWidth());
     let checklist_t = [];

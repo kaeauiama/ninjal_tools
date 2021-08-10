@@ -7,7 +7,12 @@
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     const data = getData(sheet);
     if (data == null) return null; 
-    let {format, speaker_t, dialect_t, standard_t, len, len_t} = data;
+    let {speaker_t, dialect_t, standard_t, len, len_t} = data;
+
+    if (!dialect_t || !standard_t) {
+      Browser.msgBox("データの取得に失敗しました。方言テキストおよび標準語テキストが必要です。", Browser.Buttons.OK);
+      return null;
+    }
 
     let speaker_old = speaker_new = speaker_t;
     let dialect_old = dialect_new = dialect_t;
@@ -34,7 +39,7 @@
     standard_new = standard_new.map(x=>replaceIllegalPattern(x));
 
     // 話者記号を全角に
-    if (format == FORMAT.FIVE) {
+    if (speaker_t) {
       speaker_new = speaker_new.map(x => x.toFullWidth());
     }
   
@@ -44,7 +49,7 @@
       if(i==0){message+="自動修正"; checklist.push(message); continue}
       if(dialect_new[i]=="" || standard_new[i]==""){message+="空セル "}
       if(dialect_new[i]!=dialect_old[i] || standard_new[i]!=standard_old[i]){message+="文修正有 "}
-      if(format == FORMAT.FIVE && speaker_new[i]!=speaker_old[i]){message+="話者修正有 "}
+      if(speaker_t && speaker_new[i]!=speaker_old[i]){message+="話者修正有 "}
       checklist.push(message);
     }
     processChecklist();
@@ -310,12 +315,10 @@
     
     // すべて終わったらスプレッドシートに書き込む
     let modified;
-    if (format == FORMAT.FIVE){
+    if (speaker_t){
       modified = transpose([speaker_new, dialect_new, standard_new, ...checklists_t]);
-    } else if (format == FORMAT.FOUR){
-      modified = transpose([dialect_new, standard_new, ...checklists_t]);
     } else {
-      return null
+      modified = transpose([dialect_new, standard_new, ...checklists_t]);
     }
     sheet.getRange(1, len_t+1, modified.length, modified[0].length).setValues(modified);
     return null;

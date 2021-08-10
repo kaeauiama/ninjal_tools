@@ -20,6 +20,11 @@
     if (data == null) return null; 
     let {standard_t, len} = data;
   
+    if (!standard_t) {
+      Browser.msgBox("データの取得に失敗しました。標準語テキストが必要です。", Browser.Buttons.OK);
+      return null;
+    }
+
     // 全角に置換しつつ標準語テキストを配列に入れる
     let text = standard_t.map(x=>x.toFullWidth());
   

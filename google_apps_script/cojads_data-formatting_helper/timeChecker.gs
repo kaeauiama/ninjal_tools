@@ -8,8 +8,8 @@
     if (data == null) return null; 
     let {xmin_t, xmax_t, speaker_t, dialect_t, len, len_t} = data;
 
-    if (speaker_t == null) {
-      Browser.msgBox("データの判別に失敗しました。", Browser.Buttons.OK);
+    if (!xmin_t || !xmax_t || !speaker_t || !dialect_t) {
+      Browser.msgBox("データの取得に失敗しました。xmin, xmax, 話者, 方言テキストが必要です。", Browser.Buttons.OK);
       return null;
     }
   
