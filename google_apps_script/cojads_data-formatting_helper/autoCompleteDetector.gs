@@ -7,24 +7,26 @@
     SpreadsheetApp.getUi().showModalDialog(html, "同一内容のテキストリスト");
   }
   
-  const autoCompleteDetectorMain = (setting) => {
+  const autoCompleteDetectorMain = () => {
     // 設定
     setting = {
       avoidShort: true,
       includeSimilar: false // あいまい検索はいまのところ使い物にならない
     };
   
+    // データを取得
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    
-    // ２列をコピーしてから「整列オプション」をかけていく
-    let arrAlignData = sheet.getDataRange().getValues();
+    const data = getData(sheet);
+    if (data == null) return null; 
+    let {standard_t, len} = data;
   
-  
+    if (!standard_t) {
+      Browser.msgBox("データの取得に失敗しました。標準語テキストが必要です。", Browser.Buttons.OK);
+      return null;
+    }
+
     // 全角に置換しつつ標準語テキストを配列に入れる
-    data = [];
-    for(let i=1, i_len=arrAlignData.length; i<i_len; i++) {
-      data.push(arrAlignData[i][1].toFullWidth());
-    };
+    let text = standard_t.map(x=>x.toFullWidth());
   
     /**
      * 完全一致する２行を探す
@@ -34,24 +36,28 @@
      */
     let referred = []; 
     let result_all = [];
-    for(let i=0,i_len=data.length; i<i_len; i++) {
+    for(let i=0; i<len; i++) {
       if (referred.indexOf(i)!=-1) continue;
       let result_each = [];
-      for(let j=i+1; j<i_len; j++) {
-        if (setting.includeSimilar === false && data[i]===data[j]) {
+      for(let j=i+1; j<len; j++) {
+        if (setting.includeSimilar === false && text[i]===text[j]) {
           result_each.push(i, j);
           referred.push(i, j);
-        }else if (setting.includeSimilar === true && vagueSearch(data[i],data[j]) === true) {
+        }else if (setting.includeSimilar === true && vagueSearch(text[i],text[j]) === true) {
           result_each.push(i, j);
           referred.push(i, j);
         }
       }
       if (result_each.length>0) {
-        if (setting.avoidShort == true && data[i].length < 7) continue;
-        result_all.push({id: Array.from(new Set(result_each)), text: data[i]});
+        if (setting.avoidShort == true && text[i].length < 7) continue;
+        result_all.push({id: Array.from(new Set(result_each)), text: text[i]});
       }
     }
-    return result_all;
+    if (result_all.length === []) {
+      return result_all;
+    } else {
+      return false;
+    }
   }
   
   

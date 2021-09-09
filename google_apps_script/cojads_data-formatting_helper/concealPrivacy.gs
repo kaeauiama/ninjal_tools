@@ -10,32 +10,33 @@
   }
   
   function getRTagArr() {
+    // スプレッドシートからデータを取得
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    
-    // ２列をコピーしてから「整列オプション」をかけていく
-    let arrAlignData = sheet.getDataRange().getValues();
+    const data = getData(sheet);
+    if (data == null) return null; 
+    let {standard_t} = data;
+
+    if (!standard_t) {
+      Browser.msgBox("データの取得に失敗しました。方言テキストおよび標準語テキストが必要です。", Browser.Buttons.OK);
+      return null;
+    }
   
     // 半角=>全角置換
-    // 人名X1みたいなのは過剰修正になるので要注意
-    for(let i in arrAlignData){
-      arrAlignData[i][0] = arrAlignData[i][0].toFullWidth();
-      arrAlignData[i][1] = arrAlignData[i][1].toFullWidth();
-    }
+    standard_t = standard_t.map(x=>x.toFullWidth());
     
     // Ｒタグに入っている要素を重複なしで配列に入れる
     let RTagList = [];
     const re = new RegExp("（Ｒ：(.*?)）", "g");
-    for(let i=0,i_len=arrAlignData.length; i<i_len; i++){
-      let ar = re.exec(arrAlignData[i][1]);
+    standard_t.forEach(x=>{
+      let ar = re.exec(x);
       while (ar) {
         RTagList.push(ar[1]);
-        ar = re.exec(arrAlignData[i][1]);
+        ar = re.exec(x);
       }
       re.lastIndex = 0; // lastIndex を初期化しないとバグる
-    }
+    });
     if(RTagList.length == false){
-      SpreadsheetApp.getActiveSpreadsheet().toast("Ｒタグはありませんでした。");
-      return null;
+      return false;
     }
     RTagList = RTagList.filter(function (x,i,self){return self.indexOf(x) === i}); // 重複削除
   
@@ -43,7 +44,7 @@
     let RTagArr = [["対応表",""]];
     let temp = [];
     for(let i=1; i <= RTagList.length; i++){
-      temp = [RTagList[i-1], "X" + i];
+      temp = [RTagList[i-1], "Ｘ" + i.toString().toFullWidth()];
       RTagArr.push(temp);
     }
     Logger.log(RTagArr);
@@ -53,36 +54,46 @@
   function replaceRTag(RTagArr) {
     console.log(RTagArr);
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    let arrAlignData = sheet.getDataRange().getValues();
-    for(let i in arrAlignData){
-      arrAlignData[i][0] = arrAlignData[i][0].toFullWidth();
-      arrAlignData[i][1] = arrAlignData[i][1].toFullWidth();
+    const data = getData(sheet);
+    if (data == null) return null; 
+    let {dialect_t, standard_t, len, len_t} = data;
+
+    if (!dialect_t || !standard_t) {
+      Browser.msgBox("データの取得に失敗しました。方言テキストおよび標準語テキストが必要です。", Browser.Buttons.OK);
+      return null;
     }
+
+    dialect_t = dialect_t.map(x=>x.toFullWidth());
+    standard_t = standard_t.map(x=>x.toFullWidth());
+    let checklist_t = [];
     
-    // 標準語のＲタグを書き換えて、Ｅ列に対応する文節を入れる
-    for(let i=0,i_len=arrAlignData.length; i<i_len; i++){
+    // 標準語のＲタグを書き換えて、対応する文節を入れる
+    for(let i=0; i<len; i++){
       let str = "";
       if(i===0) {str = "Ｒタグ変換";}
       else{ 
-        let [arrBunsetuDialect, arrBunsetuStandard] = arrAlignData[i][1].indexOf("　")===-1 
-          ? [[arrAlignData[i][0]], [arrAlignData[i][1]]] 
-          : [arrAlignData[i][0].split("　"), arrAlignData[i][1].split("　")];
+        let [arrBunsetuDialect, arrBunsetuStandard] = standard_t[i].indexOf("　")===-1 
+          ? [[dialect_t[i]], [standard_t[i]]] 
+          : [dialect_t[i].split("　"), standard_t[i].split("　")];
         for(let j=1,j_len=RTagArr.length; j<j_len; j++){ // j=0 はタイトル行
           for(let k in arrBunsetuStandard){
             let fstr = "（Ｒ：" + RTagArr[j][0] + "）";
             while(arrBunsetuStandard[k].indexOf(fstr)!==-1){
-              arrAlignData[i][1] = arrAlignData[i][1].replace(fstr, "（Ｒ：" + RTagArr[j][1] + "）");
+              standard_t[i] = standard_t[i].replace(fstr, "（Ｒ：" + RTagArr[j][1] + "）");
               str += arrBunsetuDialect[k];
               arrBunsetuStandard[k] = "";
             }
           }
         }
       }
-      arrAlignData[i].push(str);
+      checklist_t.push(str);
     }
+
+    // 書き込むデータを整形する
+    const modified = transpose([dialect_t, standard_t, checklist_t]);
   
-    // すべて終わったらスプレッドシートに書き込む 
-    sheet.getRange(1,3,arrAlignData.length, 3).setValues(arrAlignData);
-    sheet.getRange(1, 6, RTagArr.length, 2).setValues(RTagArr);
+    // スプレッドシートに書き込む 
+    sheet.getRange(1, len_t+1,modified.length, modified[0].length).setValues(modified);
+    sheet.getRange(1, len_t+modified[0].length+1, RTagArr.length, RTagArr[0].length).setValues(RTagArr);
     return null;
   }

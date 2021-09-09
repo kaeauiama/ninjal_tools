@@ -9,27 +9,29 @@
   }
   
   function getTagList() {
+    // スプレッドシートからデータを取得
     let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    
-    // ２列をコピーしてから「整列オプション」をかけていく
-    let arrAlignData = sheet.getDataRange().getValues();
+    const data = getData(sheet);
+    if (data == null) return null; 
+    let {standard_t} = data;
+
+    if (!standard_t) {
+      Browser.msgBox("データの取得に失敗しました。標準語テキストが必要です。", Browser.Buttons.OK);
+      return null;
+    }
   
     // 半角=>全角置換
-    // 人名X1みたいなのは過剰修正になるので要注意
-    for(let i in arrAlignData){
-      arrAlignData[i][0] = arrAlignData[i][0].toFullWidth();
-      arrAlignData[i][1] = arrAlignData[i][1].toFullWidth();
-    }
+    standard_t = standard_t.map(x=>x.toFullWidth());
     
     let lists = [
-      {name: "Ｄタグ", list: makeTagList("（Ｄ：(.*?)）", arrAlignData)},
-      {name: "Ｆタグ", list: makeTagList("（Ｆ：(.*?)）", arrAlignData)},
-      {name: "Ｇタグ", list: makeTagList("（Ｇ：(.*?)）", arrAlignData)},
-      {name: "Ｏタグ", list: makeTagList("（Ｏ：(.*?)）", arrAlignData)},
-      {name: "Ｒタグ", list: makeTagList("（Ｒ：(.*?)）", arrAlignData)},
-      {name: "Ｚタグ", list: makeTagList("（Ｚ：(.*?)）", arrAlignData)},
-      {name: "人称タグ", list: makeTagList("（.(?:ＳＧ|ＰＬ|ＤＵ)：(.*?)）", arrAlignData)},
-      {name: "山かっこ", list: makeTagList("＜(.*?)＞", arrAlignData)}
+      {name: "Ｄタグ", list: makeTagList("（Ｄ：(.*?)）", standard_t)},
+      {name: "Ｆタグ", list: makeTagList("（Ｆ：(.*?)）", standard_t)},
+      {name: "Ｇタグ", list: makeTagList("（Ｇ：(.*?)）", standard_t)},
+      {name: "Ｏタグ", list: makeTagList("（Ｏ：(.*?)）", standard_t)},
+      {name: "Ｒタグ", list: makeTagList("（Ｒ：(.*?)）", standard_t)},
+      {name: "Ｚタグ", list: makeTagList("（Ｚ：(.*?)）", standard_t)},
+      {name: "人称タグ", list: makeTagList("（.(?:ＳＧ|ＰＬ|ＤＵ)：(.*?)）", standard_t)},
+      {name: "山かっこ", list: makeTagList("＜(.*?)＞", standard_t)}
     ];
     
     console.log(lists);
@@ -41,10 +43,10 @@
     let list = [];
     const re = new RegExp(key, "g");
     for(let i=0,i_len=data.length; i<i_len; i++){
-      let ar = re.exec(data[i][1]);
+      let ar = re.exec(data[i]);
       while (ar) {
         list.push(ar[1]);
-        ar = re.exec(data[i][1]);
+        ar = re.exec(data[i]);
       }
       re.lastIndex = 0; // lastIndex を初期化しないとバグる
     }

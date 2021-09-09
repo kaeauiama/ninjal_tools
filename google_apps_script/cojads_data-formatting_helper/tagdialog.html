@@ -7,12 +7,13 @@
     <div id="messagePlace">少々お待ちください。</div>
     <div id="tablePlace"></div>
     <script>
-      window.onload = google.script.run.withSuccessHandler((lists) => {
+      window.onload = google.script.run.withSuccessHandler(renderTable).getTagList();
+      function renderTable (lists) {
         for(const item of lists){
           messagePlace.textContent = "";
           tablePlace.innerHTML += "<strong>" + item["name"] + "</strong><br>" + item["list"].sort().join(", ") + "<br>";
         }
-      }).getTagList();
+      }
     </script>
   </body>
 </html>
