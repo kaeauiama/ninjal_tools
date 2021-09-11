@@ -1,14 +1,13 @@
-# version 1.1
+# version 2.0
 # last-modified 2021-09-12
 # ------------------------------------------------------------------------
 # 重複箇所があるかどうかを確率で判定する
 # 同一フォルダ内のファイルを読み込みレポートを作成する
-# 同一の都道府県内で比較する
-# ふるさとことば集成を主として、調査に重複がないか調べる
+# 同一県・同一地点で総当たり比較する
 # データ前処理と重複判定は試行錯誤できるよう疎結合にする
 # ------------------------------------------------------------------------
 
-import argparse, csv, difflib, glob, logging, openpyxl, os, pandas, re
+import argparse, csv, difflib, glob, itertools, logging, openpyxl, os, pandas, re
 from chardet.universaldetector import UniversalDetector
 from enum import Enum
 #import Levenshtein <- needs C++ 14 to install and build...
@@ -29,13 +28,21 @@ fileout.setFormatter(f2)
 logger.addHandler(fileout)
 logger.propagate = False
 
-# 設定
-THRESHOULD = 0.7
 FILETYPE = ''
+PROCESSMODE = ''
 
 class TYPE(Enum):
     EXCEL = 'excel'
     CSV = 'csv'
+
+class MODE(Enum):
+    SPEEDY = 'speedy'
+    NORMAL = 'normal'
+    CAREFUL = 'careful'
+
+# 設定
+class CONFIG():
+    THRESHOULD = 0.5
 
 def check_encoding(filepath):
     detector = UniversalDetector()
@@ -46,17 +53,6 @@ def check_encoding(filepath):
                 break
     detector.close()
     return detector.result['encoding']
-
-
-def proc(str):
-    ln = len(str)
-    res = []
-    idx = 0
-    while idx + 2 <= ln:
-        res.append(str[idx:idx+2])
-        idx += 2
-    print(res)
-    return res
 
 
 # ベクトル類似度をもとにした類似度測定法
@@ -120,36 +116,51 @@ class StringSimilarity:
 
 
 # ずらし適用
-# main が sub の中に現れるかどうかチェックする場合
-def exec_in_step(main, sub, step, func):
-    main_list, sub_list = [], []
-    main_len, sub_len = len(main), len(sub)
+# x, y: 比較対象
+# step: 比較のために切り出す文字列の長さ
+# slide: 文字列を切り出す際のずらし幅（step の倍率）
+# func: 類似度を算出するアルゴリズム
+def exec_in_step(x, y, step, slide, func):
+    x_list, y_list = [], []
+    x_len, y_len = len(x), len(y)
 
     # 指定した文字数ごとに分割
-    # sub は適当に重複させて切り出す
     idx = 0
-    while idx + step < main_len:
-        main_list.append(main[idx:idx+step])
-        idx += step * 2
+    while idx + step < x_len:
+        x_list.append(x[idx:idx+step])
+        idx += step * slide
     idx = 0
-    while idx + step < sub_len:
-        sub_list.append(sub[idx:idx+step])
-        idx += int(step)
+    while idx + step < y_len:
+        y_list.append(y[idx:idx+step])
+        idx += step * slide
     
     # 切り出した部分ごとに比較し、類似度最大を取得
     max_ratio = 0
-    for x in main_list:
-        for y in sub_list:
+    for x in x_list:
+        for y in y_list:
             ratio = func(x, y)
             max_ratio = ratio if ratio > max_ratio else max_ratio
     return max_ratio
 
 
 # 類似度を返す
-# ここを書き換えることで判定メソッドを入れ替える
-def get_score(text, target):
+def get_score(data1, data2):
+    # モードによってサンプル抽出の設定値を変える
+    step, slide = 0, 0
+    global PROCESSMODE
+    if PROCESSMODE == MODE.SPEEDY.value:
+        step, slide = 200, 3
+    elif PROCESSMODE == MODE.NORMAL.value:
+        step, slide = 100, 1
+    elif PROCESSMODE == MODE.CAREFUL.value:
+        step, slide = 100, 1/4
+    else:
+        logger.error('モードが不明です')
+        exit(1)
+
+    # 任意の類似度算出メソッドを与える（現在はゲシュタルト）
     clazz = StringSimilarity()
-    return exec_in_step(text, target, 100, clazz.gestalt)
+    return exec_in_step(data1, data2, step, slide, clazz.gestalt)
 
 
 # テキストを標準化する
@@ -161,22 +172,26 @@ def normalize(string):
 # データ抽出
 def abstract_data(file_path):
     file_data = ''
+    try:
+        # ファイル形式毎に処理を分けて文字列データを取得
+        if FILETYPE == TYPE.EXCEL.value:
+            df = pandas.read_excel(file_path, dtype="object", engine='openpyxl')
+            list = df['方言テキスト'].to_list()
+            file_data = ''.join(list)
 
-    # ファイル形式毎に処理を分けて文字列データを取得
-    if FILETYPE == TYPE.EXCEL.value:
-        df = pandas.read_excel(file_path, dtype="object", engine='openpyxl')
-        list = df['方言テキスト'].to_list()
-        file_data = ''.join(list)
+        elif FILETYPE == TYPE.CSV.value:
+            enc = check_encoding(file_path)
+            with open (file_path, 'r', encoding=enc) as f:
+                for row in csv.DictReader(f):
+                    file_data += row['方言テキスト']
 
-    elif FILETYPE == TYPE.CSV.value:
-        enc = check_encoding(file_path)
-        with open (file_path, 'r', encoding=enc) as f:
-            for row in csv.DictReader(f):
-                file_data += row['方言テキスト']
+        # 標準化
+        file_data_normalized = normalize(file_data)
+        return file_data_normalized
 
-    # 標準化
-    file_data_normalized = normalize(file_data)
-    return file_data_normalized
+    except Exception:
+        logger.warning('WARN: データ抽出に失敗 filename=' + file_path)
+        return None
 
 
 # ファイルリストの整理
@@ -191,84 +206,76 @@ def get_file_collection():
         print('ERROR: ファイル形式が不明です。')
         exit(1)
 
-    # 都道府県ごとに整理する
+    # 都道府県と地域ごとに整理する
     file_list = [];
-    for idx in range(1,48):
-        furusato = ''
-        chousa = []
-        for csv_file in file_collection:
-            if format(idx, '02') == csv_file[0:2]:
-                # ふるさとことば集成
-                if '099' == csv_file[5:8]:
-                    furusato = csv_file
-                # 調査（場面設定以外）
-                elif '1' != csv_file[5]:
-                    chousa.append(csv_file)
-        file_list.append({'pref':idx, 'furusato': furusato, 'chousa': chousa})
+    for pref in range(1,48):
+        for place in 'abcdefghijklmnopqrstuvwxyz':
+            list = []
+            for file in file_collection:
+                # 県番号と地域符号が同一のもの
+                if format(pref, '02') == file[0:2] and place == file[3]:
+                    # 場面設定でないもの
+                    if '1' != file[5]:
+                        list.append(file)
+            if list != []:
+                file_list.append({'pref':pref, 'place': place, 'files': list})
     return file_list
 
 
 def argParse():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('-t', '--type', choices=['csv', 'excel'], default='csv')
+    argparser.add_argument('-f', '--file', choices=[e.value for e in TYPE], default=TYPE.CSV.value)
+    argparser.add_argument('-m', '--mode', choices=[e.value for e in MODE], default=MODE.NORMAL.value)
     return argparser.parse_args()
 
 
 def main():
     logger.info('==========処理開始==========')
     args = argParse()
-    global FILETYPE
-    FILETYPE = args.type
+    global FILETYPE, PROCESSMODE
+    FILETYPE, PROCESSMODE = args.file, args.mode
+    logger.info('対象：' + FILETYPE + ' モード：' + PROCESSMODE)
 
     # ファイル一覧を取得
     logger.info('ファイル一覧を取得中')
     file_list = get_file_collection()
 
-    # 都道府県ごとに処理する
+    # 地点ごとに処理する
+    suspicious_pair = []
     for item in file_list:
-        pref_num = item['pref']
-        furusato_file = item['furusato']
-        chousa_file_list = item['chousa']
-        logger.info('県番号: ' + format(pref_num, '02'))
+        pref = item['pref']
+        place = item['place']
+        file_list = item['files']
+        logger.info('県番号: ' + format(pref, '02') + ' 地点: ' + place)
         logger.debug(item)
-        
-        # ふるさとことば集成のファイルが無い場合は無視
-        if furusato_file == '':
-            logger.info('INFO: ふるさとことば集成のデータがありません')
-            continue
-        # 調査ファイルが無い場合は無視
-        if chousa_file_list ==[]:
-            logger.info('INFO: 各地方言収集緊急調査のデータがありません')
-            continue
 
-        # ふるさとことば集成のデータを取得して加工する
-        furusato_data = abstract_data(furusato_file)
-        if furusato_data is None:
-            logger.warning('WARN: ふるさとことば集成のデータ抽出に失敗 filename=' + furusato_file)
-            continue
+        # 当該地点にひとつしかファイルが無い場合はスルー
+        if len(file_list) == 1:
+            logger.info('　ファイルがひとつのため比較を行ないません')
 
-        # それ以外のデータを取得してひとつずつ類似度を測定する
-        suspicious_files = []
-        for chousa_file in chousa_file_list:
-            chousa_data = abstract_data(chousa_file)
-            if chousa_data is None:
-                logger.warning('WARN: 各地方言収集緊急調査のデータ抽出に失敗 filename=' + chousa_file)
+        # 各データを総当たりで比較する
+        data_list = []
+        for item in file_list:
+            data_list.append({'name': item, 'data': abstract_data(item)})
+
+        for pair in itertools.combinations(data_list, 2):
+            data1, data2 = pair[0], pair[1]
+            if data1['data'] == None or data2['data'] == None:
                 continue
 
             # 類似度を測定して表示する
-            similarity = get_score(furusato_data, chousa_data)
-            logger.info('INFO: 類似度 ' + str(similarity) + '  filename=' + chousa_file)
-            global THRESHOULD
-            if (similarity > THRESHOULD):
-                suspicious_files.append({'pref': pref_num, 'file': chousa_file, 'similarity': similarity})
+            similarity = get_score(data1['data'], data2['data'])
+            logger.info('　類似度：' + f'{similarity:.2f}' + '  比較ファイル：' + data1['name'] + ', ' + data2['name'])
+            if (similarity > CONFIG.THRESHOULD):
+                suspicious_pair.append({'pref': pref, 'place': place, 'file1': data1['name'], 'file2': data2['name'], 'similarity': similarity})
 
     logger.info('==========サマリ==========')
-    if suspicious_files == []:
+    if suspicious_pair == []:
         logger.info('類似度の高いファイルはありませんでした')
     else:
         logger.info('類似度の高いファイル：')
-        for item in suspicious_files:
-            logger.info('　県番号: ' + str(item['pref']) + ' 類似度: ' + str(item['similarity']) + ' ファイル名:' + item['file'])
+        for item in suspicious_pair:
+            logger.info('　類似度: ' + str(item['similarity']) + ' 比較ファイル:' + item['file1'] + ', ' + item['file2'])
 
     logger.info('==========処理終了==========')
 
