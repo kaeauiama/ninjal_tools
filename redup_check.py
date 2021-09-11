@@ -1,5 +1,5 @@
-# version 1.0
-# last-modified 2021-09-09
+# version 1.1
+# last-modified 2021-09-12
 # ------------------------------------------------------------------------
 # 重複箇所があるかどうかを確率で判定する
 # 同一フォルダ内のファイルを読み込みレポートを作成する
@@ -130,11 +130,11 @@ def exec_in_step(main, sub, step, func):
     idx = 0
     while idx + step < main_len:
         main_list.append(main[idx:idx+step])
-        idx += step
+        idx += step * 2
     idx = 0
     while idx + step < sub_len:
         sub_list.append(sub[idx:idx+step])
-        idx += int(step / 5)
+        idx += int(step)
     
     # 切り出した部分ごとに比較し、類似度最大を取得
     max_ratio = 0
@@ -225,13 +225,12 @@ def main():
     file_list = get_file_collection()
 
     # 都道府県ごとに処理する
-    logger.info('比較中')
     for item in file_list:
         pref_num = item['pref']
         furusato_file = item['furusato']
         chousa_file_list = item['chousa']
         logger.info('県番号: ' + format(pref_num, '02'))
-        logger.info(item)
+        logger.debug(item)
         
         # ふるさとことば集成のファイルが無い場合は無視
         if furusato_file == '':
@@ -259,17 +258,17 @@ def main():
             # 類似度を測定して表示する
             similarity = get_score(furusato_data, chousa_data)
             logger.info('INFO: 類似度 ' + str(similarity) + '  filename=' + chousa_file)
+            global THRESHOULD
             if (similarity > THRESHOULD):
                 suspicious_files.append({'pref': pref_num, 'file': chousa_file, 'similarity': similarity})
 
-    print('処理が終了しました')
     logger.info('==========サマリ==========')
     if suspicious_files == []:
         logger.info('類似度の高いファイルはありませんでした')
     else:
         logger.info('類似度の高いファイル：')
         for item in suspicious_files:
-            logger.info('県番号: ' + str(item['pref']) + ' 類似度: ' + str(item['similarity']) + 'ファイル名:' + item['file'])
+            logger.info('　県番号: ' + str(item['pref']) + ' 類似度: ' + str(item['similarity']) + ' ファイル名:' + item['file'])
 
     logger.info('==========処理終了==========')
 
