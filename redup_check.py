@@ -1,4 +1,4 @@
-# version 2.0
+# version 2.1
 # last-modified 2021-09-12
 # ------------------------------------------------------------------------
 # 重複箇所があるかどうかを確率で判定する
@@ -176,8 +176,8 @@ def abstract_data(file_path):
         # ファイル形式毎に処理を分けて文字列データを取得
         if FILETYPE == TYPE.EXCEL.value:
             df = pandas.read_excel(file_path, dtype="object", engine='openpyxl')
-            list = df['方言テキスト'].to_list()
-            file_data = ''.join(list)
+            lt = df['方言テキスト'].to_list()
+            file_data = ''.join(list(map(str, lt)))
 
         elif FILETYPE == TYPE.CSV.value:
             enc = check_encoding(file_path)
@@ -189,8 +189,10 @@ def abstract_data(file_path):
         file_data_normalized = normalize(file_data)
         return file_data_normalized
 
-    except Exception:
+    except Exception as e:
         logger.warning('WARN: データ抽出に失敗 filename=' + file_path)
+        logger.error(e)
+        logger.error(type(e))
         return None
 
 
