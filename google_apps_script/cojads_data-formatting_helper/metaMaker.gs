@@ -87,6 +87,7 @@ const metaMaker = (data) => {
       value[i][11] = data["recordDate"];
       value[i][12] = data["recordPlace"];
       value[i][13] = data["editor"];
+      value[i][14] = data["dialectChecker"];
       value[i][18] = data["topic"];
       value[i][19] = data["recorder"];
       value[i][20] = data["genre"];

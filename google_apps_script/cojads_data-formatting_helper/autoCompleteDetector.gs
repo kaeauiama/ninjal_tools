@@ -53,7 +53,7 @@
         result_all.push({id: Array.from(new Set(result_each)), text: text[i]});
       }
     }
-    if (result_all.length === []) {
+    if (result_all.length > 0) {
       return result_all;
     } else {
       return false;

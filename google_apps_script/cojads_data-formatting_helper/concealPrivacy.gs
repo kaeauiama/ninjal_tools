@@ -79,7 +79,7 @@
           for(let k in arrBunsetuStandard){
             let fstr = "（Ｒ：" + RTagArr[j][0] + "）";
             while(arrBunsetuStandard[k].indexOf(fstr)!==-1){
-              str = str === "" ? "" : ", ";
+              str += str === "" ? "" : ", ";
               standard_t[i] = standard_t[i].replace(fstr, "（Ｒ：" + RTagArr[j][1] + "）");
               str += RTagArr[j][1] + "＝" + RTagArr[j][0] + "／" + arrBunsetuDialect[k];
               arrBunsetuStandard[k] = "";
