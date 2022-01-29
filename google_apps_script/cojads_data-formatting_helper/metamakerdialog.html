@@ -15,7 +15,19 @@
 			</tr>
 			<tr>
 				<td>収録年月日</td>
-				<td><input type="text" id="recordDate"></td>
+				<td nowrap>
+					<select id="recordYearOption">
+						<option value="西暦" selected>西暦</option>
+						<option value="令和">令和</option>
+						<option value="平成">平成</option>
+						<option value="昭和">昭和</option>
+						<option value="大正">大正</option>
+						<option value="明治">明治</option>
+					</select>
+					<input type="text" size=4 id="recordYear"> 年
+					<input type="text" size=2 id="recordMonth"> 月
+					<input type="text" size=2 id="recordDay"> 日
+				</td>
 			</tr>
 			<tr>
 				<td>収録場所</td>
@@ -44,70 +56,113 @@
 		</table>
 	</div>
 	<hr>
-	<div>話者</div>
+	<div>話者　　　<button onclick="calcAge()">収録年から年齢計算</button></div>
 	<div id="speakertableplace">
+		<span>ロード中...</span>
 	</div>
 	<button onclick="submitData()">決定</button>
 	<button onclick="google.script.host.close()">閉じる</button>
-	<div id="messagePlace"></div>
+
 	<script>
 		window.onload = google.script.run.withSuccessHandler(renderTable).getSpeakerList();
+		let hidSpeakerList;
 		function renderTable(speakerList) {
-			console.log(speakerList);
-
-			// init
+			// 話者リストを退避
+			hidSpeakerList = speakerList;
+			// 話者情報入力テーブルの作成
 			speakertableplace.textContent = "";
-
-			// make template speakerTable
-			let div = document.createElement("div");
-			let title = document.createElement("span");
-			let table = document.createElement("table");
-			let tr1 = document.createElement("tr");
-			let td1_1 = document.createElement("td");
-			let td1_2 = document.createElement("td");
-			td1_1.textContent = "話者生年";
-			td1_2.innerHTML = '<input type="text">';
-			let tr2 = document.createElement("tr");
-			let td2_1 = document.createElement("td");
-			let td2_2 = document.createElement("td");
-			td2_1.textContent = "話者年齢";
-			td2_2.innerHTML = '<input type="text">';
-			let tr3 = document.createElement("tr");
-			let td3_1 = document.createElement("td");
-			let td3_2 = document.createElement("td");
-			td3_1.textContent = "話者性別";
-			td3_2.innerHTML = '<input type="text">';
-
-			tr1.appendChild(td1_1);
-			tr1.appendChild(td1_2);
-			tr2.appendChild(td2_1);
-			tr2.appendChild(td2_2);
-			tr3.appendChild(td3_1);
-			tr3.appendChild(td3_2);
-			table.appendChild(tr1);
-			table.appendChild(tr2);
-			table.appendChild(tr3);
-			div.appendChild(title);
-			div.appendChild(table);
-
-			// make table for each speaker with template
+			let context = "";
 			for (let speaker of speakerList) {
-				let temp = div.cloneNode(true);
-				temp.childNodes[0].textContent = "・話者" + speaker;
-				temp.childNodes[1].setAttribute("id", speaker);
-				temp.childNodes[1].childNodes[0].childNodes[1].setAttribute("id", speaker + "_birthyear");
-				temp.childNodes[1].childNodes[1].childNodes[1].setAttribute("id", speaker + "_age");
-				temp.childNodes[1].childNodes[2].childNodes[1].setAttribute("id", speaker + "_sex");
-				speakertableplace.appendChild(temp);
+				context += `
+<div>
+	<span>話者［${speaker}］</span>
+	<table>
+		<tr>
+			<td>　話者生年　</td>
+			<td>
+				<select id="${speaker}_birthYearOption">
+					<option value="西暦" selected>西暦</option>
+					<option value="令和">令和</option>
+					<option value="平成">平成</option>
+					<option value="昭和">昭和</option>
+					<option value="大正">大正</option>
+					<option value="明治">明治</option>
+				</select>
+				<input type="text" size=4 id="${speaker}_birthYear"><span>　年</span>
+			</td>
+		</tr>
+		<tr>
+			<td>　話者年齢　</td>
+			<td>
+				<input type="text" size=4 id="${speaker}_age"><span>　歳</span>
+			</td>
+		</tr>
+		<tr>
+			<td>　話者性別　</td>
+			<td>
+				<select id="${speaker}_sex">
+					<option value="－">－</option>
+					<option value="男">男</option>
+					<option value="女">女</option>
+					<option value="不明">不明</option>
+				</select>
+			</td>
+		</tr>
+	</table>
+</div>
+`;
+			}
+			speakertableplace.innerHTML = context;
+		}
+
+		function getSeireki(opt, year) {
+			let seireki;
+			if (!opt || !year) return null;
+			if (opt === "西暦") seireki = parseInt(year);
+			if (opt === "令和") seireki = 2018 + parseInt(year);
+			if (opt === "平成") seireki = 1988 + parseInt(year);
+			if (opt === "昭和") seireki = 1925 + parseInt(year);
+			if (opt === "大正") seireki = 1910 + parseInt(year);
+			if (opt === "明治") seireki = 1867 + parseInt(year);
+			return seireki || null;
+		}
+
+		function calcAge() {
+			const recordYearSeireki = getSeireki(
+				document.getElementById("recordYearOption").value,
+				document.getElementById("recordYear").value
+			);
+			const speakerList = hidSpeakerList;
+			if (speakerList == null || speakerList.length === 0) {
+				alert("話者リストの取得に失敗しました。");
+				return false;
+			}
+			for (let speaker of speakerList) {
+				const birthYearSeireki = getSeireki(
+					document.getElementById(speaker + "_birthYearOption").value,
+					document.getElementById(speaker + "_birthYear").value
+				);
+				if (recordYearSeireki && birthYearSeireki) {
+					let calculatedAge = 0 + recordYearSeireki - birthYearSeireki;
+					document.getElementById(speaker + "_age").value = calculatedAge;
+				}
 			}
 		}
 
 		function submitData() {
 			// send dict data
 			// metadata
+			const recordYearSeireki = getSeireki(
+				document.getElementById("recordYearOption").value,
+				document.getElementById("recordYear").value
+			);
+			const recordDate
+				= recordYearSeireki + "年 "
+				+ document.getElementById("recordMonth").value + "月 "
+				+ document.getElementById("recordDay").value + "日";
 			let data = {
 				reference: document.getElementById("reference").value,
-				recordDate: document.getElementById("recordDate").value,
+				recordDate: recordDate,
 				recordPlace: document.getElementById("recordPlace").value,
 				recorder: document.getElementById("recorder").value,
 				dialectChecker: document.getElementById("dialectChecker").value,
@@ -117,14 +172,15 @@
 			};
 
 			// speakerdata
-			const speakerNum = speakertableplace.childNodes.length;
-			for (let i = 0; i < speakerNum; i++) {
-				const temp = speakertableplace.childNodes[i];
-				const speaker = temp.childNodes[1].id;
+			for (let speaker of hidSpeakerList) {
+				const birthYearSeireki = getSeireki(
+					document.getElementById(speaker + "_birthYearOption").value,
+					document.getElementById(speaker + "_birthYear").value
+				);
 				data[speaker] = {
-					speakerBirthyear: document.getElementById(speaker + "_birthyear").childNodes[0].value,
-					speakerAge: document.getElementById(speaker + "_age").childNodes[0].value,
-					speakerSex: document.getElementById(speaker + "_sex").childNodes[0].value,
+					speakerBirthyear: birthYearSeireki + "年",
+					speakerAge: document.getElementById(speaker + "_age").value + "歳",
+					speakerSex: document.getElementById(speaker + "_sex").value,
 				}
 			}
 
@@ -132,7 +188,7 @@
 
 			// send to GAS
 			google.script.run.withSuccessHandler(function () {
-				messagePlace.textContent = "終了しました。";
+				alert("終了しました。");
 			}).insertMetadata(data);
 		}
 	</script>
