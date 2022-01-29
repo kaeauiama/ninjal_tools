@@ -1,130 +1,141 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <base target="_top">
-  </head>
-  <body>
-    <div>「xmin」~「標準語テキスト」だけを貼り付けて以下を入力してください。１つの談話に２つ以上の話題が含まれる場合はあとで手動で修正してください。</div>
-    <div id="metatableplace">
-      <table>
-        <tr>
-		  <td>データ名</td><td><input type="text" id="reference" value="各地方言収集緊急調査"></td>
-		</tr>
-        <tr>
-		  <td>収録年月日</td><td><input type="text" id="recordDate"></td>
-		</tr>
-        <tr>
-		  <td>収録場所</td><td><input type="text" id="recordPlace"></td>
-		</tr>
-        <tr>
-		  <td>収録担当者</td><td><input type="text" id="recorder"></td>
-		</tr>
-        <tr>
-		  <td>方言チェック担当者</td><td><input type="text" id="dialectChecker"></td>
-		</tr>
-        <tr>
-		  <td>編集担当者</td><td><input type="text" id="editor"></td>
-		</tr>
-        <tr>
-		  <td>話題</td><td><input type="text" id="topic"></td>
-		</tr>
-        <tr>
-		  <td>談話ジャンル</td><td><input type="text" id="genre"></td>
-		</tr>
-      </table>
-    </div>
+
+<head>
+	<base target="_top">
+</head>
+
+<body>
+	<div>「xmin」~「標準語テキスト」だけを貼り付けて以下を入力してください。１つの談話に２つ以上の話題が含まれる場合はあとで手動で修正してください。</div>
+	<div id="metatableplace">
+		<table>
+			<tr>
+				<td>データ名</td>
+				<td><input type="text" id="reference" value="各地方言収集緊急調査"></td>
+			</tr>
+			<tr>
+				<td>収録年月日</td>
+				<td><input type="text" id="recordDate"></td>
+			</tr>
+			<tr>
+				<td>収録場所</td>
+				<td><input type="text" id="recordPlace"></td>
+			</tr>
+			<tr>
+				<td>収録担当者</td>
+				<td><input type="text" id="recorder"></td>
+			</tr>
+			<tr>
+				<td>方言チェック担当者</td>
+				<td><input type="text" id="dialectChecker"></td>
+			</tr>
+			<tr>
+				<td>編集担当者</td>
+				<td><input type="text" id="editor"></td>
+			</tr>
+			<tr>
+				<td>話題</td>
+				<td><input type="text" id="topic"></td>
+			</tr>
+			<tr>
+				<td>談話ジャンル</td>
+				<td><input type="text" id="genre"></td>
+			</tr>
+		</table>
+	</div>
 	<hr>
 	<div>話者</div>
 	<div id="speakertableplace">
 	</div>
-    <button onclick="submitData()">決定</button>
-    <button onclick="google.script.host.close()">閉じる</button>
-    <div id="messagePlace"></div>
-    <script>
-      window.onload = google.script.run.withSuccessHandler(renderTable).getSpeakerList();
-      function renderTable(speakerList){
-	    console.log(speakerList);
-		
-	    // init
-	    speakertableplace.textContent = "";
+	<button onclick="submitData()">決定</button>
+	<button onclick="google.script.host.close()">閉じる</button>
+	<div id="messagePlace"></div>
+	<script>
+		window.onload = google.script.run.withSuccessHandler(renderTable).getSpeakerList();
+		function renderTable(speakerList) {
+			console.log(speakerList);
 
-		// make template speakerTable
-		let div = document.createElement("div");
-		let title = document.createElement("span");
-        let table = document.createElement("table");
-		let tr1 = document.createElement("tr");
-		let td1_1 = document.createElement("td");
-		let td1_2 = document.createElement("td");
-		td1_1.textContent = "話者生年";
-		td1_2.innerHTML = '<input type="text">';
-		let tr2 = document.createElement("tr");
-		let td2_1 = document.createElement("td");
-		let td2_2 = document.createElement("td");
-		td2_1.textContent = "話者年齢";
-		td2_2.innerHTML = '<input type="text">';
-		let tr3 = document.createElement("tr");
-		let td3_1 = document.createElement("td");
-		let td3_2 = document.createElement("td");
-		td3_1.textContent = "話者性別";
-		td3_2.innerHTML = '<input type="text">';
-		
-		tr1.appendChild(td1_1);
-		tr1.appendChild(td1_2);
-		tr2.appendChild(td2_1);
-		tr2.appendChild(td2_2);
-		tr3.appendChild(td3_1);
-		tr3.appendChild(td3_2);
-		table.appendChild(tr1);
-		table.appendChild(tr2);
-		table.appendChild(tr3);
-		div.appendChild(title);
-		div.appendChild(table);
-		
-		// make table for each speaker with template
-		for (let speaker of speakerList) {
-		   let temp = div.cloneNode(true);
-		   temp.childNodes[0].textContent = "・話者" + speaker;
-		   temp.childNodes[1].setAttribute("id", speaker);
-		   temp.childNodes[1].childNodes[0].childNodes[1].setAttribute("id", speaker + "_birthyear");
-		   temp.childNodes[1].childNodes[1].childNodes[1].setAttribute("id", speaker + "_age");
-		   temp.childNodes[1].childNodes[2].childNodes[1].setAttribute("id", speaker + "_sex");
-		   speakertableplace.appendChild(temp);
+			// init
+			speakertableplace.textContent = "";
+
+			// make template speakerTable
+			let div = document.createElement("div");
+			let title = document.createElement("span");
+			let table = document.createElement("table");
+			let tr1 = document.createElement("tr");
+			let td1_1 = document.createElement("td");
+			let td1_2 = document.createElement("td");
+			td1_1.textContent = "話者生年";
+			td1_2.innerHTML = '<input type="text">';
+			let tr2 = document.createElement("tr");
+			let td2_1 = document.createElement("td");
+			let td2_2 = document.createElement("td");
+			td2_1.textContent = "話者年齢";
+			td2_2.innerHTML = '<input type="text">';
+			let tr3 = document.createElement("tr");
+			let td3_1 = document.createElement("td");
+			let td3_2 = document.createElement("td");
+			td3_1.textContent = "話者性別";
+			td3_2.innerHTML = '<input type="text">';
+
+			tr1.appendChild(td1_1);
+			tr1.appendChild(td1_2);
+			tr2.appendChild(td2_1);
+			tr2.appendChild(td2_2);
+			tr3.appendChild(td3_1);
+			tr3.appendChild(td3_2);
+			table.appendChild(tr1);
+			table.appendChild(tr2);
+			table.appendChild(tr3);
+			div.appendChild(title);
+			div.appendChild(table);
+
+			// make table for each speaker with template
+			for (let speaker of speakerList) {
+				let temp = div.cloneNode(true);
+				temp.childNodes[0].textContent = "・話者" + speaker;
+				temp.childNodes[1].setAttribute("id", speaker);
+				temp.childNodes[1].childNodes[0].childNodes[1].setAttribute("id", speaker + "_birthyear");
+				temp.childNodes[1].childNodes[1].childNodes[1].setAttribute("id", speaker + "_age");
+				temp.childNodes[1].childNodes[2].childNodes[1].setAttribute("id", speaker + "_sex");
+				speakertableplace.appendChild(temp);
+			}
 		}
-	  }
 
-      function submitData() {
-        // send dict data
-		// metadata
-		let data = {
-		  reference: document.getElementById("reference").value,
-		  recordDate: document.getElementById("recordDate").value,
-		  recordPlace: document.getElementById("recordPlace").value,
-		  recorder: document.getElementById("recorder").value,
-		  dialectChecker: document.getElementById("dialectChecker").value,
-		  editor: document.getElementById("editor").value,
-		  topic: document.getElementById("topic").value,
-		  genre: document.getElementById("genre").value
-		};
-		
-		// speakerdata
-		const speakerNum = speakertableplace.childNodes.length;
-		for (let i=0; i<speakerNum; i++){
-		  const temp = speakertableplace.childNodes[i];
-		  const speaker = temp.childNodes[1].id;
-		  data[speaker] = {
-		    speakerBirthyear: document.getElementById(speaker+"_birthyear").childNodes[0].value,
-		    speakerAge: document.getElementById(speaker+"_age").childNodes[0].value,
-		    speakerSex: document.getElementById(speaker+"_sex").childNodes[0].value,
-		  }
+		function submitData() {
+			// send dict data
+			// metadata
+			let data = {
+				reference: document.getElementById("reference").value,
+				recordDate: document.getElementById("recordDate").value,
+				recordPlace: document.getElementById("recordPlace").value,
+				recorder: document.getElementById("recorder").value,
+				dialectChecker: document.getElementById("dialectChecker").value,
+				editor: document.getElementById("editor").value,
+				topic: document.getElementById("topic").value,
+				genre: document.getElementById("genre").value
+			};
+
+			// speakerdata
+			const speakerNum = speakertableplace.childNodes.length;
+			for (let i = 0; i < speakerNum; i++) {
+				const temp = speakertableplace.childNodes[i];
+				const speaker = temp.childNodes[1].id;
+				data[speaker] = {
+					speakerBirthyear: document.getElementById(speaker + "_birthyear").childNodes[0].value,
+					speakerAge: document.getElementById(speaker + "_age").childNodes[0].value,
+					speakerSex: document.getElementById(speaker + "_sex").childNodes[0].value,
+				}
+			}
+
+			console.log(data);
+
+			// send to GAS
+			google.script.run.withSuccessHandler(function () {
+				messagePlace.textContent = "終了しました。";
+			}).insertMetadata(data);
 		}
-		
-		console.log(data);
+	</script>
+</body>
 
-        // send to GAS
-        google.script.run.withSuccessHandler(function(){
-          messagePlace.textContent = "終了しました。";
-        }).insertMetadata(data);
-      }
-    </script>
-  </body>
 </html>

@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <base target="_top">
-  </head>
-  <body>
-    <div id="messagePlace"></div>
-    <div id="tablePlace"></div>
-    <div>
-      <button onclick="render()">再度チェックする</button>
-    </div>
-    <script>
-      window.onload = render;
-      function render() {
-        messagePlace.textContent = "少々お待ちください。";
-        google.script.run.withSuccessHandler((list) => {
-          messagePlace.textContent = "";
-          tablePlace.innerText = `・${list.join("\n・")}`;
-        }).getCorrectionList();
-      }
-    </script>
-  </body>
+
+<head>
+	<base target="_top">
+</head>
+
+<body>
+	<div id="messagePlace"></div>
+	<div id="tablePlace"></div>
+	<div>
+		<button onclick="render()">再度チェックする</button>
+	</div>
+	<script>
+		window.onload = render;
+		function render() {
+			messagePlace.textContent = "少々お待ちください。";
+			google.script.run.withSuccessHandler((list) => {
+				messagePlace.textContent = "";
+				tablePlace.innerText = `・${list.join("\n・")}`;
+			}).getCorrectionList();
+		}
+	</script>
+</body>
+
 </html>
