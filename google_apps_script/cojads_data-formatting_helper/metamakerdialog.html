@@ -7,6 +7,7 @@
 
 <body>
 	<div>「xmin」~「標準語テキスト」だけを貼り付けて以下を入力してください。１つの談話に２つ以上の話題が含まれる場合はあとで手動で修正してください。</div>
+	<hr>
 	<div id="metatableplace">
 		<table>
 			<tr>
@@ -56,13 +57,16 @@
 		</table>
 	</div>
 	<hr>
-	<div>話者　　　<button onclick="calcAge()">収録年から年齢計算</button></div>
+	<div>話者<small>　※年齢は決定押下で自動計算されます（収録年－生年）。</small></div>
 	<div id="speakertableplace">
 		<span>ロード中...</span>
 	</div>
+	<hr>
+	<div>
+		<label><input id="doCalcChk" type="checkbox">年齢を手動で入力する</label>
+	</div>
 	<button onclick="submitData()">決定</button>
 	<button onclick="google.script.host.close()">閉じる</button>
-
 	<script>
 		window.onload = google.script.run.withSuccessHandler(renderTable).getSpeakerList();
 		let hidSpeakerList;
@@ -101,7 +105,7 @@
 			<td>　話者性別　</td>
 			<td>
 				<select id="${speaker}_sex">
-					<option value="－">－</option>
+					<option disabled selected value>－選択してください－</option>
 					<option value="男">男</option>
 					<option value="女">女</option>
 					<option value="不明">不明</option>
@@ -150,6 +154,14 @@
 		}
 
 		function submitData() {
+			// 年齢の自動計算
+			const doAutoCalc = document.getElementById("doCalcChk").checked;
+			if (doAutoCalc === false) {
+				console.log("doCalc実行");
+				calcAge();
+			} else {
+				console.log("doCalc未実行");
+			}
 			// send dict data
 			// metadata
 			const recordYearSeireki = getSeireki(
@@ -181,6 +193,10 @@
 					speakerBirthyear: birthYearSeireki + "年",
 					speakerAge: document.getElementById(speaker + "_age").value + "歳",
 					speakerSex: document.getElementById(speaker + "_sex").value,
+				}
+				if (data[speaker].speakerSex == "") {
+					alert(`話者［${speaker}］の性別を設定してください。`);
+					return false;
 				}
 			}
 
