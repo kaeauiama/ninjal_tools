@@ -1,9 +1,9 @@
-# version 1.2
-# last-modified 2021-04-27
+# version 1.3
+# last-modified 2022-03-21
 # ------------------------------------------------------------------------
-# viewer 用の metadata_squeezer からアイデアを流用（コードはほぼ全面書き換え）
 # 同じフォルダにあるエクセルファイルからメタデータを抽出して CSV を吐く
-# 地点名、ファイル名、収録年、長さ、話者数（総数、男、女）
+# ファイル情報：県番号、地点名、ファイル名、出典、収録年、長さ、話題、ジャンル、話者数（総数、男、女、不明）
+# 話者情報：ファイル名、話者記号、話者年齢、話者性別
 # ------------------------------------------------------------------------
 # TODO: 話者数を正確に出せるようにする
 
@@ -135,12 +135,13 @@ def extract_filedata (path):
 		prefecture = get_attribute('file番号', df)
 		location = get_location(df)
 		file_name = os.path.splitext(os.path.basename(path))[0]
+		source = get_attribute('データ名', df)
 		recyear = get_recyear(df)
 		length = get_length(df)
 		topic = get_topic(df)
 		genre = get_attribute('談話ジャンル', df)
 		speaker_sum, speaker_male, speaker_female, speaker_unknown = get_speaker_num(df)
-		metadata_list = [prefecture, location, file_name, recyear, "", length, topic, genre, speaker_sum, speaker_male, speaker_female, speaker_unknown, "", ""]
+		metadata_list = [prefecture, location, file_name, source, recyear, "", length, topic, genre, speaker_sum, speaker_male, speaker_female, speaker_unknown, "", ""]
 		return metadata_list
 	except Exception as e:
 		print(f'{path} のメタデータ抽出失敗')
@@ -174,7 +175,7 @@ if __name__ == "__main__":
 	print(f'処理対象：{strlog}')
 	logger.info(f'処理対象：{strlog}')
 
-	filedata_header = ['prefecture','location','file_name','record_year','release','length','topic','genre','speaker_num','speaker_male_num','speaker_female_num','speaker_unknown_num','detail','other']
+	filedata_header = ['prefecture','location','file_name','source','record_year','release','length','topic','genre','speaker_num','speaker_male_num','speaker_female_num','speaker_unknown_num','detail','other']
 	filedata_list = [filedata_header]
 
 	speakerdata_header = ['file_name','name','age','sex']
