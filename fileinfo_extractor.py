@@ -7,7 +7,7 @@
 # ------------------------------------------------------------------------
 # TODO: 話者数を正確に出せるようにする
 
-import glob, os, openpyxl, pandas, json, logging
+import csv, glob, os, openpyxl, pandas, logging
 
 # ログ出力用の設定
 logger = logging.getLogger(__name__)
@@ -25,11 +25,11 @@ logger.addHandler(fileout)
 logger.propagate = False
 
 
-# 県番号を返す
-def get_prefecture(df):
-	prefecture = df.iloc[0].loc["file番号"]
-	logger.info(f'県番号：{prefecture}')
-	return str(prefecture)
+# 指定した列の値を返す（一本値）
+def get_attribute(col_name, df):
+	value = df.iloc[0].loc[col_name]
+	logger.info(f'{col_name}：{value}')
+	return str(value)
 
 
 # 収録地点を返す
@@ -84,53 +84,82 @@ def get_length(df):
 	return xmax_fmt
 
 
+# 話題を返す
+def get_topic(df):
+	topic_df = df.loc[:,["話題"]].drop_duplicates().dropna()
+	topic_list = topic_df.values.flatten().tolist()
+	logger.info(topic_list)
+	topics = "、".join(topic_list)
+	logger.info(f'話題：{topics}')
+	return topics
+
+
 # 総話者数、男性数、女性数を返す
 # 話者記号に揺れがある場合、数が多く出ることがある
-def get_speaker(df, filename):
+def get_speaker_num(df):
 	speaker_df = df.loc[:,["話者", "話者性別"]].drop_duplicates().dropna()
 	sum = len(speaker_df)
 	male = len(speaker_df[speaker_df["話者性別"] == "男"])
 	female = len(speaker_df[speaker_df["話者性別"] == "女"])
+	unknown = len(speaker_df[speaker_df["話者性別"] == "不明"])
 	logger.info(f'話者数：{sum}, {male}, {female}')
-	if sum != male + female:
-		logger.warning(f"{filename} - 注意：男女の合計が総数と違います。")
+	if sum != male + female + unknown:
+		logger.warning(f" - 注意：合計が総数と違います。")
 		logger.info(f'{speaker_df}')
-	return str(sum), str(male), str(female)
+	return str(sum), str(male), str(female), str(unknown)
 
 
 # CSV として保存する
-def save_as_csv(list):
-	csv = ''
-	for row in list:
-		csv += ','.join(row) + '\n'
-
+def save_as_csv(filename, list):
 	try:
-		open('metadata.csv', mode='w', encoding='utf-8').write(csv)
+		with open(f'{filename}.csv', mode='w', newline="", encoding='utf-8') as f:
+			writer = csv.writer(f)
+			writer.writerows(list)
 	except Exception as e:
 		logger.exception(f'{e}')
-		print('metadata.csv への書き込み失敗')
+		print(f'{filename}.csv への書き込み失敗')
 		print('処理終了')
 		exit(1)
-	logger.info('metadata.csv への書き込み成功')
+	print(f'{filename}.csv への書き込み成功')
+	logger.info(f'{filename}.csv への書き込み成功')
 	return None
 
 
-# メイン関数
-def extract_metadata (path):
+# ファイル情報抽出メイン関数
+def extract_filedata (path):
 	# 開いてデータフレームにする
 	df = pandas.read_excel(path, dtype="object", engine='openpyxl')
 
 	# ひとつずつ抽出する
 	try:
-		prefecture = get_prefecture(df)
+		prefecture = get_attribute('file番号', df)
 		location = get_location(df)
-		filename = os.path.splitext(os.path.basename(path))[0]
-		logger.info(f'ファイル名：{filename}')
+		file_name = os.path.splitext(os.path.basename(path))[0]
 		recyear = get_recyear(df)
 		length = get_length(df)
-		speaker_sum, speaker_male, speaker_female = get_speaker(df, filename)
-		metadata_list = [prefecture, location, "", "", filename, recyear, "", length, speaker_sum, speaker_male, speaker_female, "", ""]
+		topic = get_topic(df)
+		genre = get_attribute('談話ジャンル', df)
+		speaker_sum, speaker_male, speaker_female, speaker_unknown = get_speaker_num(df)
+		metadata_list = [prefecture, location, file_name, recyear, "", length, topic, genre, speaker_sum, speaker_male, speaker_female, speaker_unknown, "", ""]
 		return metadata_list
+	except Exception as e:
+		print(f'{path} のメタデータ抽出失敗')
+		logger.exception(f'{e}')
+		return None
+
+
+# 話者情報抽出メイン関数
+def extract_speakerdata (path):
+	# データフレーム抽出
+	df = pandas.read_excel(path, dtype="object", engine='openpyxl')
+
+	# 話者名抽出
+	try:
+		file_name = os.path.splitext(os.path.basename(path))[0]
+		speaker_df = df.loc[:,["話者", "話者年齢", "話者性別"]].drop_duplicates().dropna()
+		speaker_df.insert(0, "file_name", file_name, allow_duplicates=True)
+		speaker_list = speaker_df.values.tolist()
+		return speaker_list
 	except Exception as e:
 		print(f'{path} のメタデータ抽出失敗')
 		logger.exception(f'{e}')
@@ -145,21 +174,31 @@ if __name__ == "__main__":
 	print(f'処理対象：{strlog}')
 	logger.info(f'処理対象：{strlog}')
 
-	header = ['prefecture','name','coordinate_x','coordinate_y','filename','year','release','length','speakers','male','female','detail','other']
-	metadata_list = [header]
+	filedata_header = ['prefecture','location','file_name','record_year','release','length','topic','genre','speaker_num','speaker_male_num','speaker_female_num','speaker_unknown_num','detail','other']
+	filedata_list = [filedata_header]
+
+	speakerdata_header = ['file_name','name','age','sex']
+	speakerdata_list = [speakerdata_header]
 
 	# メタデータ抽出して貯める
 	# 辞書型などではなく単純に順序固定のリストとして：
 	# ファイル名、地点名、収録年、長さ、話者総数、話者男性、話者女性
 	for item in excel_collection:
 		print(f'処理中：{os.path.basename(item)}')
-		logger.info(f'=====処理開始：{os.path.basename(item)}')
-		metadata = extract_metadata(item)
-		metadata_list.append(metadata)
-		logger.info(f'=====処理終了：{os.path.basename(item)}')
+		logger.info(f'=====ファイル情報抽出処理　開始：{os.path.basename(item)}')
+		filedata = extract_filedata(item)
+		filedata_list.append(filedata)
+		logger.info(f'=====ファイル情報抽出処理　終了：{os.path.basename(item)}')
+		logger.info(f'=====話者情報抽出処理　開始：{os.path.basename(item)}')
+		speakerdata = extract_speakerdata(item)
+		speakerdata_list.extend(speakerdata)
+		#for i in speakerdata:
+		#	speakerdata_list.append(i)
+		logger.info(f'=====話者情報抽出処理　終了：{os.path.basename(item)}')
 
 	# 溜まったメタデータを CSV 出力する
-	save_as_csv (metadata_list)
+	save_as_csv ('metadata_fileinfo_配布用', filedata_list)
+	save_as_csv ('metadata_speakerinfo_配布用', speakerdata_list)
 
 	print('処理が終了しました')
 	logger.info('==========処理終了==========')
